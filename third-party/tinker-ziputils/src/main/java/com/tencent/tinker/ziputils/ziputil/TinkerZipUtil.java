@@ -79,4 +79,22 @@ public class TinkerZipUtil {
             }
         }
     }
+
+    public static void extractTinkerEntry(TinkerZipFile apk, TinkerZipEntry zipEntry, String name, TinkerZipOutputStream outputStream) throws IOException {
+        InputStream in = null;
+        try {
+            in = apk.getInputStream(zipEntry);
+            outputStream.putNextEntry(new TinkerZipEntry(zipEntry, name));
+            byte[] buffer = new byte[BUFFER_SIZE];
+
+            for (int length = in.read(buffer); length != -1; length = in.read(buffer)) {
+                outputStream.write(buffer, 0, length);
+            }
+            outputStream.closeEntry();
+        } finally {
+            if (in != null) {
+                in.close();
+            }
+        }
+    }
 }

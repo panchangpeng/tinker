@@ -36,6 +36,8 @@ public class TypedValue {
     public static final String DEX_TEMP_PATCH_DIR = "tempPatchedDexes";
     public static final String RES_LOG_FILE       = "res_log.txt";
     public static final String RES_META_TXT       = "res_meta.txt";
+    public static final String PATCH_META_FILE    = "patch_meta.txt";
+    public static final String PATCH_LOG_FILE     = "patch_log.txt";
 
     public static final String FILE_ASSETS = "assets";
 

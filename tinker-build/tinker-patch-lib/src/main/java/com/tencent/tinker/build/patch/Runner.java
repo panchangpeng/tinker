@@ -16,6 +16,7 @@
 
 package com.tencent.tinker.build.patch;
 
+import com.tencent.tinker.build.apkpatcher.ApkPatchGenerator;
 import com.tencent.tinker.build.builder.PatchBuilder;
 import com.tencent.tinker.build.decoder.ApkDecoder;
 import com.tencent.tinker.build.info.PatchInfo;
@@ -64,6 +65,10 @@ public class Runner {
             decoder.onAllPatchesStart();
             decoder.patch(config.mOldApkFile, config.mNewApkFile);
             decoder.onAllPatchesEnd();
+
+            //gen new apk and sign and copy apk mate info add cy cpan
+            ApkPatchGenerator apkPatchGenerator = new ApkPatchGenerator(config);
+            apkPatchGenerator.executeAndSave();
 
             //gen meta file and version file
             PatchInfo info = new PatchInfo(config);

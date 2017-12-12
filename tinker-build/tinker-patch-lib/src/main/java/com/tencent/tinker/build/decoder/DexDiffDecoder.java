@@ -410,7 +410,11 @@ public class DexDiffDecoder extends BaseDecoder {
 
         try {
             DexPatchGenerator dexPatchGen = new DexPatchGenerator(oldDexFile, newDexFile);
-            dexPatchGen.setAdditionalRemovingClassPatterns(config.mDexLoaderPattern);
+
+            // TODO cpan do remove sysload when gen a patch for apk.
+            if (!config.mApkPatchMode) {
+                 dexPatchGen.setAdditionalRemovingClassPatterns(config.mDexLoaderPattern);
+            }
 
             logWriter.writeLineToInfoFile(
                     String.format(

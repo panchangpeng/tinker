@@ -121,10 +121,12 @@ public final class ExcludedClassModifiedChecker {
                                             removeClasses.add(classname);
                                         }
                                     }
+                                    //TODO cpan uncheck load class
                                     changedClassInfosMap.keySet().removeAll(removeClasses);
                                     if (changedClassInfosMap.isEmpty()) {
                                         stmCode = STMCODE_END;
                                     } else {
+//                                        stmCode = STMCODE_END;
                                         stmCode = STMCODE_ERROR_LOADER_CLASS_CHANGED;
                                     }
                                 } else {

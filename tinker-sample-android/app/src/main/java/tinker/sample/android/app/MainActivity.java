@@ -29,6 +29,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.tencent.tinker.lib.library.TinkerLoadLibrary;
 import com.tencent.tinker.lib.tinker.Tinker;
@@ -102,6 +103,7 @@ public class MainActivity extends AppCompatActivity {
         buildInfoButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Toast.makeText(MainActivity.this, "Hello World!", Toast.LENGTH_SHORT).show();
                 showInfo(MainActivity.this);
             }
         });
@@ -146,6 +148,37 @@ public class MainActivity extends AppCompatActivity {
         builder.setView(v);
         final AlertDialog alert = builder.create();
         alert.show();
+        Log.i(TAG,"sfdsfsdfsdfsfs");
+
+        Log.i(TAG,"sfdsfsdfsdfsfs");
+        Log.i(TAG,"sfdsfsdfsdfsfs");
+        Log.i(TAG,"sfdsfsdfsdfsfs");
+
+        Log.i(TAG,"sfdsfsdfsdfsfs");
+        Log.i(TAG,"sfdsfsdfsdfsfs");
+        Log.i(TAG,"sfdsfsdfsdfsfs");
+        Log.i(TAG,"sfdsfsdfsdfsfs");
+        Log.i(TAG,"sfdsfsdfsdfsfs");
+        Log.i(TAG,"sfdsfsdfsdfsfs");
+        Log.i(TAG,"sfdsfsdfsdfsfs");
+        Log.i(TAG,"sfdsfsdfsdfsfs");
+        Log.i(TAG,"sfdsfsdfsdfsfs");
+
+        Log.i(TAG,"sfdsfsdfsdfsfs");
+        Log.i(TAG,"sfdsfsdfsdfsfs");
+        Log.i(TAG,"sfdsfsdfsdfsfs");
+        Log.i(TAG,"sfdsfsdfsdfsfs");
+        Log.i(TAG,"sfdsfsdfsdfsfs");
+        Log.i(TAG,"sfdsfsdfsdfsfs");
+
+        Log.i(TAG,"sfdsfsdfsdfsfs");
+        Log.i(TAG,"sfdsfsdfsdfsfs");
+        Log.i(TAG,"sfdsfsdfsdfsfs");
+        Log.i(TAG,"sfdsfsdfsdfsfs");
+        Log.i(TAG,"sfdsfsdfsdfsfs");
+        Log.i(TAG,"sfdsfsdfsdfsfs");
+
+
         return true;
     }
 

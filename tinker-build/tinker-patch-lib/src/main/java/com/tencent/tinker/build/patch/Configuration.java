@@ -78,6 +78,8 @@ public class Configuration {
     protected static final String ATTR_SIGN_FILE_KEYPASS   = "keypass";
     protected static final String ATTR_SIGN_FILE_STOREPASS = "storepass";
     protected static final String ATTR_SIGN_FILE_ALIAS     = "alias";
+
+    protected static final String ATTR_SUPPORT_APK_PATCH   = "supportApkPatch";
     /**
      * base config data
      */
@@ -89,6 +91,7 @@ public class Configuration {
     public boolean mIgnoreWarning;
     public boolean mIsProtectedApp;
     public boolean mSupportHotplugComponent;
+    public boolean mSupportApkPatch;
     /**
      * lib config
      */
@@ -136,8 +139,11 @@ public class Configuration {
     public File mTempResultDir;
     public File mTempUnzipOldDir;
     public File mTempUnzipNewDir;
+    public File mTempUnzipMergeDir;
 
     public boolean mUsingGradle;
+
+    public boolean mApkPatchMode = false; // 是否是apk patch的方式
 
 
     /**
@@ -145,6 +151,7 @@ public class Configuration {
      */
     public Configuration(File config, File outputFile, File oldApkFile, File newApkFile)
         throws IOException, ParserConfigurationException, SAXException, TinkerPatchException {
+        mApkPatchMode = false;
         mUsingGradle = false;
         mSoFilePattern = new HashSet<>();
         mDexFilePattern = new HashSet<>();
@@ -175,6 +182,7 @@ public class Configuration {
      * use by gradle
      */
     public Configuration(InputParam param) throws IOException, TinkerPatchException {
+        mApkPatchMode = false;
         mUsingGradle = true;
         mSoFilePattern = new HashSet<>();
         mDexFilePattern = new HashSet<>();
@@ -227,6 +235,7 @@ public class Configuration {
         mIsProtectedApp = param.isProtectedApp;
 
         mSupportHotplugComponent = param.supportHotplugComponent;
+        mSupportApkPatch         = param.supportApkPatch;
 
         mSevenZipPath = param.sevenZipPath;
         mPackageFields = param.configFields;
@@ -318,6 +327,8 @@ public class Configuration {
 
         String tempNewName = newApkName.substring(0, newApkName.indexOf(TypedValue.FILE_APK));
 
+        String tempMergeName = newApkName.substring(0, newApkName.indexOf(TypedValue.FILE_APK)) + "_merge";
+
         // Bugfix: For windows user, filename is case-insensitive.
         if (tempNewName.equalsIgnoreCase(tempOldName)) {
             tempOldName += "-old";
@@ -326,6 +337,7 @@ public class Configuration {
 
         mTempUnzipOldDir = new File(mOutFolder, tempOldName);
         mTempUnzipNewDir = new File(mOutFolder, tempNewName);
+        mTempUnzipMergeDir = new File(mOutFolder, tempMergeName);
     }
 
     public void setSignData(File signatureFile, String keypass, String storealias, String storepass) throws IOException {
@@ -432,6 +444,8 @@ public class Configuration {
                         mIsProtectedApp = value.equals("true");
                     } else if (tagName.equals(ATTR_SUPPORT_HOTPLUG_COMPONENT)) {
                         mSupportHotplugComponent = value.equals("true");
+                    } else if (tagName.equals(ATTR_SUPPORT_APK_PATCH)) {
+                        mSupportApkPatch = value.equals("true");
                     } else if (tagName.equals(ATTR_USE_SIGN)) {
                         mUseSignAPk = value.equals("true");
                     } else if (tagName.equals(ATTR_SEVEN_ZIP_PATH)) {

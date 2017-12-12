@@ -21,4 +21,4 @@
 
 -dontwarn com.android.**
 
-
+-keep class tinker.sample.android.app.SampleApplication { *; }

@@ -37,6 +37,7 @@ public class InputParam {
     public final boolean ignoreWarning;
     public final boolean isProtectedApp;
     public final boolean supportHotplugComponent;
+    public final boolean supportApkPatch;
     public final boolean useSign;
 
     /**
@@ -87,6 +88,7 @@ public class InputParam {
         boolean ignoreWarning,
         boolean isProtectedApp,
         boolean supportHotplugComponent,
+        boolean supportApkPatch,
         boolean useSign,
 
         ArrayList<String> dexFilePattern,
@@ -113,6 +115,7 @@ public class InputParam {
         this.ignoreWarning = ignoreWarning;
         this.isProtectedApp = isProtectedApp;
         this.supportHotplugComponent = supportHotplugComponent;
+        this.supportApkPatch = supportApkPatch;
         this.useSign = useSign;
 
         this.dexFilePattern = dexFilePattern;
@@ -145,6 +148,7 @@ public class InputParam {
         private boolean ignoreWarning;
         private boolean isProtectedApp;
         private boolean isComponentHotplugSupported;
+        private boolean isApkPatchSupported;
         private boolean useSign;
 
         /**
@@ -268,6 +272,11 @@ public class InputParam {
             return this;
         }
 
+        public Builder setIsApkPatchSupported(boolean isApkPatchSupported) {
+            this.isApkPatchSupported = isApkPatchSupported;
+            return this;
+        }
+
         public Builder setDexLoaderPattern(ArrayList<String> dexLoaderPattern) {
             this.dexLoaderPattern = dexLoaderPattern;
             return this;
@@ -310,6 +319,7 @@ public class InputParam {
                     ignoreWarning,
                     isProtectedApp,
                     isComponentHotplugSupported,
+                    isApkPatchSupported,
                     useSign,
                     dexFilePattern,
                     dexLoaderPattern,

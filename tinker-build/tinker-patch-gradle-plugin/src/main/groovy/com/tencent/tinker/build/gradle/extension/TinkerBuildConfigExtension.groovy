@@ -64,6 +64,8 @@ public class TinkerBuildConfigExtension {
      */
     boolean supportHotplugComponent
 
+    boolean supportApkPatch
+
     private Project project
 
     boolean usingResourceMapping
@@ -82,6 +84,8 @@ public class TinkerBuildConfigExtension {
         usingResourceMapping = false
         keepDexApply = false
         isProtectedApp = false
+        supportHotplugComponent = false
+        supportApkPatch = false
     }
 
     void checkParameter() {
@@ -97,6 +101,7 @@ public class TinkerBuildConfigExtension {
            | applyResourceMapping = ${applyResourceMapping}
            | isProtectedApp = ${isProtectedApp}
            | supportHotplugComponent = ${supportHotplugComponent}
+           | supportApkPatch = ${supportApkPatch}
            | keepDexApply = ${keepDexApply}
            | tinkerId = ${tinkerId}
         """.stripMargin()
