@@ -47,11 +47,13 @@ public class ShareSecurityCheck {
     private final Context                 mContext;
     private final HashMap<String, String> metaContentMap;
     private final HashMap<String, String> packageProperties;
+    private final HashMap<String, Integer> patchMetaProperties;
 
     public ShareSecurityCheck(Context context) {
         mContext = context;
         metaContentMap = new HashMap<>();
         packageProperties = new HashMap<>();
+        patchMetaProperties = new HashMap<>();
         if (mPublicKeyMd5 == null) {
             init(mContext);
         }
@@ -175,5 +177,40 @@ public class ShareSecurityCheck {
         } finally {
             SharePatchFileUtil.closeQuietly(stream);
         }
+    }
+
+    /**
+     * Nullable
+     *
+     * @return HashMap<String, Integer>
+     */
+    public HashMap<String, Integer> getPatchMetaPropertiesIfPresent() {
+        if (!patchMetaProperties.isEmpty()) {
+            return patchMetaProperties;
+        }
+
+        String property = metaContentMap.get(ShareConstants.PATCH_META_FILE);
+
+        if (property == null) {
+            return null;
+        }
+
+        String[] lines = property.split("\n");
+        for (final String line : lines) {
+            if (line == null || line.length() <= 0) {
+                continue;
+            }
+            //it is comment
+            if (line.startsWith("#")) {
+                continue;
+            }
+            final String[] kv = line.split("=", 2);
+            if (kv == null || kv.length < 2) {
+                continue;
+            }
+
+            patchMetaProperties.put(kv[0].trim(), Integer.valueOf(kv[1].trim()));
+        }
+        return patchMetaProperties;
     }
 }

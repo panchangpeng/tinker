@@ -15,11 +15,11 @@ dependencies {
 //    implementation "org.scala-lang:scala-library:2.11.7"
 
         //use for local maven test
-//        implementation("com.tencent.tinker:tinker-android-loader:${TINKER_VERSION}") { changing = true }
-//        implementation("com.tencent.tinker:aosp-dexutils:${TINKER_VERSION}") { changing = true }
-//        implementation("com.tencent.tinker:bsdiff-util:${TINKER_VERSION}") { changing = true }
-//        implementation("com.tencent.tinker:tinker-ziputils:${TINKER_VERSION}") { changing = true }
-//        implementation("com.tencent.tinker:tinker-commons:${TINKER_VERSION}") { changing = true }
+        implementation("com.tencent.tinker:tinker-android-loader:${TINKER_VERSION}") { changing = true }
+        implementation("com.tencent.tinker:aosp-dexutils:${TINKER_VERSION}") { changing = true }
+        implementation("com.tencent.tinker:bsdiff-util:${TINKER_VERSION}") { changing = true }
+        implementation("com.tencent.tinker:tinker-ziputils:${TINKER_VERSION}") { changing = true }
+        implementation("com.tencent.tinker:tinker-commons:${TINKER_VERSION}") { changing = true }
     } else {
         compile fileTree(dir: 'libs', include: ['*.jar'])
         testCompile 'junit:junit:4.12'
@@ -157,11 +157,11 @@ ext {
 
     //for normal build
     //old apk file to build patch apk
-    tinkerOldApkPath = "${bakPath}/app-debug-1018-17-32-47.apk"
+    tinkerOldApkPath = "${bakPath}/app-release-1212-21-39-20.apk"
     //proguard mapping file to build patch apk
-    tinkerApplyMappingPath = "${bakPath}/app-debug-1018-17-32-47-mapping.txt"
+    tinkerApplyMappingPath = "${bakPath}/app-release-1208-17-48-16-mapping.txt"
     //resource R.txt to build patch apk, must input if there is resource changed
-    tinkerApplyResourcePath = "${bakPath}/app-debug-1018-17-32-47-R.txt"
+    tinkerApplyResourcePath = "${bakPath}/app-release-1212-21-39-20-R.txt"
 
     //only use for build all flavor, if not, just ignore this field
     tinkerBuildFlavorDirectory = "${bakPath}/app-1018-17-32-47"
@@ -285,6 +285,15 @@ if (buildWithTinker()) {
              * <b>Notice that currently this feature is incubating and only support NON-EXPORTED Activity</b>
              */
             supportHotplugComponent = false
+
+            /**
+             * optional, default 'false'
+             * Whether tinker should support apk patch (patch which can merge old version apk to new version apk).
+             * If this attribute is true, this patch file can merge old apk and create new version apk.
+             *
+             * <b>Notice It's not hot patch , you need re install this apk to get new feature. </b>
+             */
+            supportApkPatch = true
         }
 
         dex {

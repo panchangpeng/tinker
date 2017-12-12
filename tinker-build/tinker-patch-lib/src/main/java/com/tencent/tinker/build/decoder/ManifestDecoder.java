@@ -18,6 +18,7 @@ package com.tencent.tinker.build.decoder;
 
 
 import com.tencent.tinker.build.apkparser.AndroidParser;
+import com.tencent.tinker.build.info.InfoWriter;
 import com.tencent.tinker.build.patch.Configuration;
 import com.tencent.tinker.build.util.Logger;
 import com.tencent.tinker.build.util.TinkerPatchException;
@@ -63,8 +64,23 @@ public class ManifestDecoder extends BaseDecoder {
     private static final String XML_NODEATTR_PROCESS            = "process";
     private static final String XML_NODENAME_INTENTFILTER       = "intent-filter";
 
-    public ManifestDecoder(Configuration config) throws IOException {
+    private final InfoWriter logWriter;
+    private final InfoWriter metaWriter;
+
+    public ManifestDecoder(Configuration config, String metaPath, String logPath) throws IOException {
         super(config);
+
+        if (metaPath != null) {
+            metaWriter = new InfoWriter(config, config.mTempResultDir + File.separator + metaPath);
+        } else {
+            metaWriter = null;
+        }
+
+        if (logPath != null) {
+            logWriter = new InfoWriter(config, config.mOutFolder + File.separator + logPath);
+        } else {
+            logWriter = null;
+        }
     }
 
     @Override
@@ -93,8 +109,14 @@ public class ManifestDecoder extends BaseDecoder {
 
             if (!isManifestChanged) {
                 Logger.d("\nManifest has no changes, skip rest decode works.");
+                metaWriter.writeLineToInfoFile("mode=0");
                 return false;
             }
+
+            // use apk patch mode when activitys
+            Logger.d("\n now use apk patch mode for gen patch.");
+            config.mApkPatchMode = true;
+            metaWriter.writeLineToInfoFile("mode=1");
 
             // check whether there is any new Android Component and get their names.
             // so far only Activity increment can pass checking.
@@ -106,13 +128,13 @@ public class ManifestDecoder extends BaseDecoder {
             final boolean hasIncComponent = (!incActivities.isEmpty() || !incServices.isEmpty()
                     || !incProviders.isEmpty() || !incReceivers.isEmpty());
 
-            if (!config.mSupportHotplugComponent && hasIncComponent) {
+            if (!config.mSupportApkPatch && !config.mSupportHotplugComponent && hasIncComponent) {
                 announceWarningOrException("manifest was changed, while hot plug component support mode is disabled. "
                         + "Such changes will not take effect.");
             }
 
             // generate increment manifest.
-            if (hasIncComponent) {
+            if (hasIncComponent && config.mSupportHotplugComponent) {
                 final Document newXmlDoc = DocumentHelper.parseText(newAndroidManifest.xml);
                 final Document incXmlDoc = DocumentHelper.createDocument();
 
@@ -306,5 +328,15 @@ public class ManifestDecoder extends BaseDecoder {
     @Override
     public void onAllPatchesEnd() throws IOException, TinkerPatchException {
 
+    }
+
+    @Override
+    protected void clean() {
+        if (logWriter != null) {
+            logWriter.close();
+        }
+        if (metaWriter != null) {
+            metaWriter.close();
+        }
     }
 }

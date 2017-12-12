@@ -54,6 +54,9 @@ public class ShareConstants {
     public static final String INTERPRET_DEX_OPTIMIZE_PATH = "interpet";
     public static final String CHANING_DEX_OPTIMIZE_PATH   = "changing";
 
+    public static final String PATCH_META_FILE             = "assets/patch_meta.txt";
+    public static final String PATCH_MODE                  = "mode";
+
     public static final Pattern CLASS_N_PATTERN = Pattern.compile("classes(?:[2-9]{0,1}|[1-9][0-9]+)\\.dex(\\.jar)?");
 
 
@@ -87,6 +90,9 @@ public class ShareConstants {
     public static final String RES_PATTERN_TITLE   = "pattern:";
     public static final String RES_STORE_TITLE     = "store:";
 
+    public static final String RES_APK_META_FILES       = "assets/APK-META-INF";
+    public static final String RES_APK_META_INF         = "META-INF";
+    public static final String RES_APK_NAME             = "rebuild-sign.apk";
 
     public static final String DEXMODE_RAW = "raw";
     public static final String DEXMODE_JAR = "jar";

@@ -154,6 +154,11 @@ public class UpgradePatch extends AbstractPatch {
             return false;
         }
 
+        // gen new apk
+        if (!ApkDiffPatchInternal.tryRecoverApk(manager, signatureCheck, context, patchVersionDirectory, destPatchFile)) {
+            TinkerLog.e(TAG, "UpgradePatch tryPatch:new patch recover, try recover apk failed");
+        }
+
         if (!SharePatchInfo.rewritePatchInfoFileWithLock(patchInfoFile, newInfo, patchInfoLockFile)) {
             TinkerLog.e(TAG, "UpgradePatch tryPatch:new patch recover, rewrite patch info failed");
             manager.getPatchReporter().onPatchInfoCorrupted(patchFile, newInfo.oldVersion, newInfo.newVersion);
