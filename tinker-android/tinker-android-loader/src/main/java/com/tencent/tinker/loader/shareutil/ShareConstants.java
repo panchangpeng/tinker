@@ -138,6 +138,8 @@ public class ShareConstants {
     public static final int TYPE_RESOURCE    = 6;
     public static final int TYPE_CLASS_N_DEX = 7;
 
+    public static final int PATCH_MODE_HOT       = 0; // Hot patch
+    public static final int PATCH_MODE_DIFF      = 1; // diff patch
 
     public static final int TINKER_DISABLE             = 0x00;
     public static final int TINKER_DEX_MASK            = 0x01;

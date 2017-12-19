@@ -132,19 +132,21 @@ public class DexDiffDecoder extends BaseDecoder {
         // first of all, we should check input files if excluded classes were modified.
         Logger.d("Check for loader classes in dex: %s", dexName);
 
-        try {
-            excludedClassModifiedChecker.checkIfExcludedClassWasModifiedInNewDex(oldFile, newFile);
-        } catch (IOException e) {
-            throw new TinkerPatchException(e);
-        } catch (TinkerPatchException e) {
-            if (config.mIgnoreWarning) {
-                Logger.e("Warning:ignoreWarning is true, but we found %s", e.getMessage());
-            } else {
-                Logger.e("Warning:ignoreWarning is false, but we found %s", e.getMessage());
-                throw e;
+        if (!config.mApkPatchMode) {
+            try {
+                excludedClassModifiedChecker.checkIfExcludedClassWasModifiedInNewDex(oldFile, newFile);
+            } catch (IOException e) {
+                throw new TinkerPatchException(e);
+            } catch (TinkerPatchException e) {
+                if (config.mIgnoreWarning) {
+                    Logger.e("Warning:ignoreWarning is true, but we found %s", e.getMessage());
+                } else {
+                    Logger.e("Warning:ignoreWarning is false, but we found %s", e.getMessage());
+                    throw e;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
 
         // If corresponding new dex was completely deleted, just return false.
@@ -198,7 +200,9 @@ public class DexDiffDecoder extends BaseDecoder {
             generatePatchInfoFile();
         }
 
-        addTestDex();
+        if (!config.mApkPatchMode) {
+            addTestDex();
+        }
     }
 
     @SuppressWarnings("NewApi")

@@ -67,9 +67,10 @@ public class Runner {
             decoder.onAllPatchesEnd();
 
             //gen new apk and sign and copy apk mate info add cy cpan
-            ApkPatchGenerator apkPatchGenerator = new ApkPatchGenerator(config);
-            apkPatchGenerator.executeAndSave();
-
+            if (config.mApkPatchMode) {
+                ApkPatchGenerator apkPatchGenerator = new ApkPatchGenerator(config);
+                apkPatchGenerator.executeAndSave();
+            }
             //gen meta file and version file
             PatchInfo info = new PatchInfo(config);
             info.gen();

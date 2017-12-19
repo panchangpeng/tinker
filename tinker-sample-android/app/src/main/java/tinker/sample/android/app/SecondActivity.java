@@ -19,11 +19,11 @@ public class SecondActivity extends Activity {
         Log.i(TAG, "sdfsdfs");
 //        Log.i(TAG, "sdfsdfs");
         Log.i(TAG, "sdfsdfs");
-        Log.i(TAG, "sdfsdfs");
-        Log.i(TAG, "sdfsdfs");
+//        Log.i(TAG, "sdfsdfs");
+//        Log.i(TAG, "sdfsdfs");
 
-        Log.i(TAG, "sdfsdfs");
-        Log.i(TAG, "sdfsdfs");
+//        Log.i(TAG, "sdfsdfs");
+//        Log.i(TAG, "sdfsdfs");
 
     }
 }

@@ -67,9 +67,8 @@ public class DexDiffPatchInternal extends BasePatchInternal {
     private static HashMap<ShareDexDiffPatchInfo, File> classNDexInfo = new HashMap<>();
     private static boolean                              isVmArt       = ShareTinkerInternals.isVmArt();
 
-
     protected static boolean tryRecoverDexFiles(Tinker manager, ShareSecurityCheck checker, Context context,
-                                                String patchVersionDirectory, File patchFile) {
+                                                String patchVersionDirectory, File patchFile, int patchMode) {
         if (!manager.isEnabledForDex()) {
             TinkerLog.w(TAG, "patch recover, dex is not enabled");
             return true;
@@ -82,13 +81,16 @@ public class DexDiffPatchInternal extends BasePatchInternal {
         }
 
         long begin = SystemClock.elapsedRealtime();
-        boolean result = patchDexExtractViaDexDiff(context, patchVersionDirectory, dexMeta, patchFile);
+        boolean result = patchDexExtractViaDexDiff(context, patchVersionDirectory, dexMeta, patchFile, patchMode);
         long cost = SystemClock.elapsedRealtime() - begin;
         TinkerLog.i(TAG, "recover dex result:%b, cost:%d", result, cost);
         return result;
     }
 
-    protected static boolean waitAndCheckDexOptFile(File patchFile, Tinker manager) {
+    protected static boolean waitAndCheckDexOptFile(File patchFile, Tinker manager, int mode) {
+        if (mode == ShareConstants.PATCH_MODE_DIFF) {
+            return true;
+        }
         if (optFiles.isEmpty()) {
             return true;
         }
@@ -160,7 +162,7 @@ public class DexDiffPatchInternal extends BasePatchInternal {
         return true;
     }
 
-    private static boolean patchDexExtractViaDexDiff(Context context, String patchVersionDirectory, String meta, final File patchFile) {
+    private static boolean patchDexExtractViaDexDiff(Context context, String patchVersionDirectory, String meta, final File patchFile, int mode) {
         String dir = patchVersionDirectory + "/" + DEX_PATH + "/";
 
         if (!extractDexDiffInternals(context, dir, meta, patchFile, TYPE_DEX)) {
@@ -181,7 +183,7 @@ public class DexDiffPatchInternal extends BasePatchInternal {
         }
 
         final String optimizeDexDirectory = patchVersionDirectory + "/" + DEX_OPTIMIZE_PATH + "/";
-        return dexOptimizeDexFiles(context, legalFiles, optimizeDexDirectory, patchFile);
+        return dexOptimizeDexFiles(context, legalFiles, optimizeDexDirectory, patchFile, mode);
 
     }
 
@@ -305,8 +307,14 @@ public class DexDiffPatchInternal extends BasePatchInternal {
         return result;
     }
 
-    private static boolean dexOptimizeDexFiles(Context context, List<File> dexFiles, String optimizeDexDirectory, final File patchFile) {
+    private static boolean dexOptimizeDexFiles(Context context, List<File> dexFiles, String optimizeDexDirectory, final File patchFile, int mode) {
         final Tinker manager = Tinker.with(context);
+
+        //cpan mode
+        if (mode == ShareConstants.PATCH_MODE_DIFF) {
+            TinkerLog.w(TAG, "patch recover, no need to optimizeDex. It is diff patch");
+            return true;
+        }
 
         optFiles.clear();
 

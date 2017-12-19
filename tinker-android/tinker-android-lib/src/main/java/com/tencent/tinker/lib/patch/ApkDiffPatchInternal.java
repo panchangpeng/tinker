@@ -32,8 +32,8 @@ import java.util.List;
 public class ApkDiffPatchInternal extends BasePatchInternal {
     private static final String TAG = "Tinker.ApkDiffPatchInternal";
 
-    public static boolean tryRecoverApk(Tinker manager, ShareSecurityCheck checker, Context context,
-                                        String patchVersionDirectory, File patchFile) {
+    public static boolean tryRecoverApkFiles(Tinker manager, ShareSecurityCheck checker, Context context,
+                                             String patchVersionDirectory, File patchFile) {
 
         int patchMode = checker.getPatchMetaPropertiesIfPresent().get(ShareConstants.PATCH_MODE);
         if (patchMode == 0) {
@@ -64,6 +64,7 @@ public class ApkDiffPatchInternal extends BasePatchInternal {
         TinkerZipFile patchZipFile = null;
         TinkerZipFile oldApkZipFile = null;
         TinkerZipFile classNZipFile = null;
+        TinkerZipFile resourceZipFile = null;
         InputStream inputStream = null;
         List<String> zipNameAdded = new ArrayList<>();
         long startTime = System.currentTimeMillis();
@@ -88,7 +89,7 @@ public class ApkDiffPatchInternal extends BasePatchInternal {
                 return false;
             }
             TinkerZipUtil.extractTinkerEntry(patchZipFile, manifestZipEntry, out);
-            TinkerLog.d(TAG, "copy AndroidManifest finish.");
+            TinkerLog.d(TAG, "copy AndroidManifest.xml from patch zip.");
 
             // copy new apk meta inf
             final Enumeration<? extends TinkerZipEntry> metaEntries = patchZipFile.entries();
@@ -98,43 +99,45 @@ public class ApkDiffPatchInternal extends BasePatchInternal {
                     throw new TinkerRuntimeException("zipEntry is null when get from patch file.");
                 }
                 String name = zipEntry.getName();
-                TinkerLog.d(TAG, "patch zip file name:%s", name);
                 if (name.contains("../")) {
                     continue;
                 }
                 if (!zipEntry.isDirectory() && name.startsWith(ShareConstants.RES_APK_META_FILES)) {
                     String newName = ShareConstants.RES_APK_META_INF + File.separator + name.substring(name.lastIndexOf("/") + 1);
-                    TinkerLog.d(TAG, "zip entry name:%s new name:%s", name, newName);
                     TinkerZipUtil.extractTinkerEntry(patchZipFile, zipEntry, newName, out);
                     zipNameAdded.add(newName);
+                    TinkerLog.d(TAG, "copy %s from patch zip as %s", name, newName);
+                } else {
+                    TinkerLog.d(TAG, "skip copy %s from patch zip.", name);
                 }
             }
 
             // copy *.so
             String soDir = patchVersionDirectory + "/" + SO_PATH + "/";
             String libMeta = checker.getMetaContentMap().get(SO_META_FILE);
-
             ArrayList<ShareBsDiffPatchInfo> patchList = new ArrayList<>();
-
             ShareBsDiffPatchInfo.parseDiffPatchInfo(libMeta, patchList);
 
             if (patchList.isEmpty()) {
                 TinkerLog.i(TAG, "no so lib need to copy.");
             }
-
             for (ShareBsDiffPatchInfo info : patchList) {
                 String soFilePath = soDir + info.path + "/" + info.name;
                 String soName = SO_PATH + File.separator + info.path + File.separator + info.name;
-                TinkerLog.d(TAG, "soFilePath:%s soInputPath:%s", soFilePath, soName);
                 File soFile = new File(soFilePath);
                 if (soFile.exists()) {
                     inputStream = new FileInputStream(soFile);
                     TinkerZipEntry z = new TinkerZipEntry(soName);
                     TinkerZipUtil.extractTinkerEntry(z, inputStream, out);
                     zipNameAdded.add(soName);
+                    TinkerLog.d(TAG, "copy %s from %s", info.name, soFilePath);
                 } else {
-                    TinkerLog.w(TAG, "can not find so file. path:%s", soFilePath);
+                    TinkerLog.w(TAG, "skip copy %s. file not exist. ", soFilePath);
                 }
+
+                //delete file
+                //SharePatchFileUtil.deleteDir(soDir);
+                //TinkerLog.w(TAG, "delete %s.", soDir);
             }
 
             // copy class.dex
@@ -150,7 +153,7 @@ public class ApkDiffPatchInternal extends BasePatchInternal {
             }
 
             if (!classNFile.exists()) {
-                TinkerLog.i(TAG, "no tinker_classN.apk find..");
+                TinkerLog.i(TAG, "can not find tinker_classN.apk");
             } else {
                 classNZipFile = new TinkerZipFile(classNFile);
                 final Enumeration<? extends TinkerZipEntry> dexEntries = classNZipFile.entries();
@@ -160,18 +163,54 @@ public class ApkDiffPatchInternal extends BasePatchInternal {
                         throw new TinkerRuntimeException("zipEntry is null when get from patch file.");
                     }
                     String name = zipEntry.getName();
-                    TinkerLog.d(TAG, "classN file name:%s", name);
                     if (name.contains("../")) {
                         continue;
                     }
                     if (!zipEntry.isDirectory() && !name.equalsIgnoreCase(ShareConstants.TEST_DEX_NAME)) {
                         TinkerZipUtil.extractTinkerEntry(classNZipFile, zipEntry, out);
                         zipNameAdded.add(zipEntry.getName());
+                        TinkerLog.d(TAG, "copy %s from %s", name, ShareConstants.CLASS_N_APK_NAME);
+                    } else {
+                        TinkerLog.w(TAG, "skip copy %s from %s", name, ShareConstants.CLASS_N_APK_NAME);
                     }
                 }
+
+                //SharePatchFileUtil.deleteDir(dexDir);
+                //TinkerLog.w(TAG, "delete %s.", dexDir);
             }
 
-            //copy other file
+
+            //copy resource
+            String resourceDir = patchVersionDirectory + "/" + ShareConstants.RES_PATH + "/";
+            File resourceFile = new File(resourceDir, ShareConstants.RES_NAME);
+            if (!resourceFile.exists()) {
+                TinkerLog.w(TAG, "can not find %s", ShareConstants.RES_NAME);
+            } else {
+                resourceZipFile = new TinkerZipFile(resourceFile);
+                final Enumeration<? extends TinkerZipEntry> resourceEntries = resourceZipFile.entries();
+                while (resourceEntries.hasMoreElements()) {
+                    TinkerZipEntry zipEntry = resourceEntries.nextElement();
+                    if (zipEntry == null) {
+                        throw new TinkerRuntimeException("zipEntry is null when get from resource.apk");
+                    }
+                    String name = zipEntry.getName();
+                    if (name.contains("../")) {
+                        continue;
+                    }
+
+                    if (!zipEntry.isDirectory() && !zipNameAdded.contains(name) && !name.equalsIgnoreCase(ShareConstants.RES_MANIFEST)) {
+                        TinkerZipUtil.extractTinkerEntry(resourceZipFile, zipEntry, out);
+                        zipNameAdded.add(name);
+                        TinkerLog.d(TAG, "copy %s from resource.apk.", name);
+                    } else {
+                        TinkerLog.d(TAG, "skip copy %s from resource.apk.", name);
+                    }
+                }
+                //SharePatchFileUtil.deleteDir(resourceDir);
+                //TinkerLog.w(TAG, "delete %s.", resourceDir);
+            }
+
+            //copy other file from old apk
             oldApkZipFile = new TinkerZipFile(oldApkFile);
             final Enumeration<? extends TinkerZipEntry> entries = oldApkZipFile.entries();
             while (entries.hasMoreElements()) {
@@ -185,13 +224,16 @@ public class ApkDiffPatchInternal extends BasePatchInternal {
                 }
                 // "res/*", "assets/*", "resources.arsc"
                 // copy 除AndroidManifst、dex、lib、meta-inf外的所有方法
-                if (!zipNameAdded.contains(name) && !name.equalsIgnoreCase(ShareConstants.RES_MANIFEST)) {
+                if (!zipNameAdded.contains(name) && !name.equalsIgnoreCase(ShareConstants.RES_MANIFEST) && !name.startsWith(ShareConstants.RES_APK_META_INF)) {
                     TinkerZipUtil.extractTinkerEntry(oldApkZipFile, zipEntry, out);
-                    TinkerLog.d(TAG, "copy file to zip. file name:%s", name);
+                    zipNameAdded.add(name);
+                    TinkerLog.d(TAG, "copy %s from old apk.", name);
                 } else {
-                    TinkerLog.d(TAG, "ignore copy file to zip. file name:%s", name);
+                    TinkerLog.d(TAG, "skip copy %s from old apk.", name);
                 }
             }
+
+
 
 
         } catch (Throwable e) {

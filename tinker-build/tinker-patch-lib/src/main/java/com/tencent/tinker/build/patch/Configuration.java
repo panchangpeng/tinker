@@ -151,7 +151,6 @@ public class Configuration {
      */
     public Configuration(File config, File outputFile, File oldApkFile, File newApkFile)
         throws IOException, ParserConfigurationException, SAXException, TinkerPatchException {
-        mApkPatchMode = false;
         mUsingGradle = false;
         mSoFilePattern = new HashSet<>();
         mDexFilePattern = new HashSet<>();
@@ -182,7 +181,6 @@ public class Configuration {
      * use by gradle
      */
     public Configuration(InputParam param) throws IOException, TinkerPatchException {
-        mApkPatchMode = false;
         mUsingGradle = true;
         mSoFilePattern = new HashSet<>();
         mDexFilePattern = new HashSet<>();

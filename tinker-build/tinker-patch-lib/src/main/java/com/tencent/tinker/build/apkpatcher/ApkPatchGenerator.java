@@ -55,12 +55,12 @@ public class ApkPatchGenerator {
         unzipNewApk(configuration.mNewApkFile, configuration.mTempUnzipMergeDir);
         removeMetaInfo();
         copyDexes();
-//        copyResourceARSC();
+//        copyOldResourceARSC();
 //        copyAndroidManifestToMergeDir();
         unsignApk();
         signApk(unSignedApk, signedApk);
-        copyMetaInfoFromMergeApk();
 
+        copyMetaInfoFromMergeApk();
         copyAndroidManifest(configuration.mTempUnzipMergeDir.getAbsolutePath() + File.separator + TypedValue.RES_MANIFEST, configuration.mTempResultDir.getAbsolutePath() + File.separator + TypedValue.RES_MANIFEST);
         Logger.d("executeAndSave finish.");
 
@@ -111,6 +111,12 @@ public class ApkPatchGenerator {
         } else {
             Logger.d("Empty dex");
         }
+    }
+
+    private void copyOldResourceARSC() throws IOException {
+        File src = new File(configuration.mTempUnzipOldDir + File.separator + TypedValue.RES_ARSC);
+        File desc = new File(configuration.mTempUnzipMergeDir + File.separator + TypedValue.RES_ARSC);
+        FileOperation.copyFileUsingStream(src, desc);
     }
 
     private void unsignApk() throws IOException {

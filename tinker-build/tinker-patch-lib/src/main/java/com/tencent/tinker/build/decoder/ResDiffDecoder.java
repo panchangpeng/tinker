@@ -107,7 +107,7 @@ public class ResDiffDecoder extends BaseDecoder {
         //actually, it won't go below
         if (newFile == null || !newFile.exists()) {
             String relativeStringByOldDir = getRelativePathStringToOldFile(oldFile);
-            if (Utils.checkFileInPattern(config.mResIgnoreChangePattern, relativeStringByOldDir)) {
+            if (Utils.checkFileInPattern(config.mResIgnoreChangePattern, relativeStringByOldDir) && !config.mApkPatchMode) {
                 Logger.e("found delete resource: " + relativeStringByOldDir + " ,but it match ignore change pattern, just ignore!");
                 return false;
             }
@@ -119,7 +119,7 @@ public class ResDiffDecoder extends BaseDecoder {
         File outputFile = getOutputPath(newFile).toFile();
 
         if (oldFile == null || !oldFile.exists()) {
-            if (Utils.checkFileInPattern(config.mResIgnoreChangePattern, name)) {
+            if (Utils.checkFileInPattern(config.mResIgnoreChangePattern, name) && !config.mApkPatchMode) {
                 Logger.e("found add resource: " + name + " ,but it match ignore change pattern, just ignore!");
                 return false;
             }
@@ -140,7 +140,7 @@ public class ResDiffDecoder extends BaseDecoder {
         if (oldMd5 != null && oldMd5.equals(newMd5)) {
             return false;
         }
-        if (Utils.checkFileInPattern(config.mResIgnoreChangePattern, name)) {
+        if (Utils.checkFileInPattern(config.mResIgnoreChangePattern, name) && !config.mApkPatchMode) {
             Logger.d("found modify resource: " + name + ", but it match ignore change pattern, just ignore!");
             return false;
         }
@@ -149,7 +149,7 @@ public class ResDiffDecoder extends BaseDecoder {
             return false;
         }
         if (name.equals(TypedValue.RES_ARSC)) {
-            if (AndroidParser.resourceTableLogicalChange(config)) {
+            if (AndroidParser.resourceTableLogicalChange(config) && !config.mApkPatchMode) {
                 Logger.d("found modify resource: " + name + ", but it is logically the same as original new resources.arsc, just ignore!");
                 return false;
             }
@@ -276,14 +276,19 @@ public class ResDiffDecoder extends BaseDecoder {
         deletedSet.remove(TypedValue.RES_MANIFEST);
         modifiedSet.remove(TypedValue.RES_MANIFEST);
         largeModifiedSet.remove(TypedValue.RES_MANIFEST);
-        //remove add, delete or modified if they are in ignore change pattern also
-        removeIgnoreChangeFile(modifiedSet);
-        removeIgnoreChangeFile(deletedSet);
-        removeIgnoreChangeFile(addedSet);
-        removeIgnoreChangeFile(largeModifiedSet);
 
-        // last add test res in assets for user cannot ignore it;
-        addAssetsFileForTestResource();
+        // Cpan
+        //remove add, delete or modified if they are in ignore change pattern also
+        if (!config.mApkPatchMode) {
+            removeIgnoreChangeFile(modifiedSet);
+            removeIgnoreChangeFile(deletedSet);
+            removeIgnoreChangeFile(addedSet);
+            removeIgnoreChangeFile(largeModifiedSet);
+
+            // last add test res in assets for user cannot ignore it;
+            addAssetsFileForTestResource();
+        }
+
 
         File tempResZip = new File(config.mOutFolder + File.separator + TEMP_RES_ZIP);
         final File tempResFiles = config.mTempResultDir;
