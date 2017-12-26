@@ -125,4 +125,22 @@ public interface PatchReporter {
      */
     void onPatchInfoCorrupted(File patchFile, String oldVersion, String newVersion);
 
+    /**
+     * recover apk callback
+     * @param patchFile     the input patch file to recover
+     * @param tempApkFile   the output apk in data/data
+     * @param apkFile       the output apk in sdcard
+     * @param errorCode     the error code
+     */
+    void onPatchDiffFail(File patchFile, File tempApkFile, File apkFile, int errorCode);
+
+    /**
+     * recover apk callback with unknown exception
+     * @param patchFile    the input patch file to recover
+     * @param tempApkFile  the output apk in data/data
+     * @param apkFile      the output apk in sdcard
+     * @param e            the error code
+     */
+    void onDiffException(File patchFile, File tempApkFile, File apkFile, Throwable e);
+
 }

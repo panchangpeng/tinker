@@ -66,10 +66,11 @@ public interface LoadReporter {
      * return codes are define in {@link com.tencent.tinker.loader.shareutil.ShareConstants}
      *
      * @param patchDirectory the root patch directory {you_apk_data}/tinker
+     * @param apkFile        the file of new apk. If it is apk diff mode
      * @param loadCode       {@code ShareConstants.ERROR_LOAD_OK}, 0 means success
      * @param cost           time in MS
      */
-    void onLoadResult(File patchDirectory, int loadCode, long cost);
+    void onLoadResult(File patchDirectory,  File apkFile, int loadCode, long cost);
 
     /**
      * load patch occur unknown exception that we have wrap try catch for you!

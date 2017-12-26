@@ -49,6 +49,8 @@ public class Tinker {
     private static boolean sInstalled = false;
 
     final Context       context;
+
+    final File          diffDirectory;
     /**
      * data dir, such as /data/data/tinker.sample.android/tinker
      */
@@ -76,13 +78,14 @@ public class Tinker {
     private boolean loaded = false;
 
     private Tinker(Context context, int tinkerFlags, LoadReporter loadReporter, PatchReporter patchReporter,
-                   PatchListener listener, File patchDirectory, File patchInfoFile, File patchInfoLockFile,
+                   PatchListener listener, File diffDirectory, File patchDirectory, File patchInfoFile, File patchInfoLockFile,
                    boolean isInMainProc, boolean isPatchProcess, boolean tinkerLoadVerifyFlag) {
         this.context = context;
         this.listener = listener;
         this.loadReporter = loadReporter;
         this.patchReporter = patchReporter;
         this.tinkerFlags = tinkerFlags;
+        this.diffDirectory = diffDirectory;
         this.patchDirectory = patchDirectory;
         this.patchInfoFile = patchInfoFile;
         this.patchInfoLockFile = patchInfoLockFile;
@@ -151,7 +154,7 @@ public class Tinker {
         tinkerLoadResult = new TinkerLoadResult();
         tinkerLoadResult.parseTinkerResult(getContext(), intentResult);
         //after load code set
-        loadReporter.onLoadResult(patchDirectory, tinkerLoadResult.loadCode, tinkerLoadResult.costTime);
+        loadReporter.onLoadResult(patchDirectory, tinkerLoadResult.newApkFile, tinkerLoadResult.loadCode, tinkerLoadResult.costTime);
 
         if (!loaded) {
             TinkerLog.w(TAG, "tinker load fail!");
@@ -230,6 +233,10 @@ public class Tinker {
         return ShareTinkerInternals.isTinkerEnabledForResource(tinkerFlags);
     }
 
+    public File getDiffDirectory() {
+        return diffDirectory;
+    }
+
     public File getPatchDirectory() {
         return patchDirectory;
     }
@@ -261,7 +268,31 @@ public class Tinker {
         if (isTinkerLoaded()) {
             TinkerLog.e(TAG, "it is not safety to clean patch when tinker is loaded, you should kill all your process after clean!");
         }
+        cleanDiff();
         SharePatchFileUtil.deleteDir(patchDirectory);
+    }
+
+    public void cleanDiff() {
+        if (diffDirectory == null) {
+            return;
+        }
+        SharePatchFileUtil.deleteDir(new File(diffDirectory, ShareConstants.PATCH_DIRECTORY_NAME));
+        // File patchInfoLockFile = SharePatchFileUtil.getPatchInfoLockFile(patchDirectory.getPath());
+        // File patchInfoFile = SharePatchFileUtil.getPatchInfoFile(patchDirectory.getPath());
+        // SharePatchInfo oldInfo = SharePatchInfo.readAndCheckPropertyWithLock(patchInfoFile, patchInfoLockFile);
+         // ShareSecurityCheck signatureCheck = new ShareSecurityCheck(context);
+        // signatureCheck.verifyPatchMetaSignature(patchFile);
+        // String mode = signatureCheck.getPatchMetaPropertiesIfPresent().get(ShareConstants.PATCH_MODE);
+        // TinkerLog.i(TAG, "UpgradePatch Mode :%s", mode);
+        // int patchMode = 0;
+        // if (mode != null && mode.length() > 0) {
+        //    patchMode = Integer.valueOf(mode);
+        // }
+        // diff + tinkerId + '.apk'
+        // patchVersionDirectory + "/" + ShareConstants.RES_PATH + "/";
+        // String tinkerId =
+        // SharePatchFileUtil.deleteDir(new File(patchDirectory + File.separator + ShareConstants.RES_PATH + File.separator + tinkerId + ".apk"));
+        // SharePatchFileUtil.deleteDir(new File(diffDirectory + File.separator + tinkerId + ".apk"));
     }
 
     /**
@@ -328,6 +359,7 @@ public class Tinker {
         private LoadReporter  loadReporter;
         private PatchReporter patchReporter;
         private PatchListener listener;
+        private File          diffDirectory;
         private File          patchDirectory;
         private File          patchInfoFile;
         private File          patchInfoLockFile;
@@ -343,6 +375,7 @@ public class Tinker {
             this.context = context;
             this.mainProcess = TinkerServiceInternals.isInMainProcess(context);
             this.patchProcess = TinkerServiceInternals.isInTinkerPatchServiceProcess(context);
+            this.diffDirectory = SharePatchFileUtil.getDiffDirectory(context);
             this.patchDirectory = SharePatchFileUtil.getPatchDirectory(context);
             if (this.patchDirectory == null) {
                 TinkerLog.e(TAG, "patchDirectory is null!");
@@ -405,6 +438,14 @@ public class Tinker {
             return this;
         }
 
+        public Builder setDiffDirectory(File dir) {
+            if (dir == null) {
+                throw new TinkerRuntimeException("diff directory must not be null.");
+            }
+            this.diffDirectory = dir;
+            return this;
+        }
+
         public Tinker build() {
             if (status == -1) {
                 status = ShareConstants.TINKER_ENABLE_ALL;
@@ -426,7 +467,7 @@ public class Tinker {
                 tinkerLoadVerifyFlag = false;
             }
 
-            return new Tinker(context, status, loadReporter, patchReporter, listener, patchDirectory,
+            return new Tinker(context, status, loadReporter, patchReporter, listener, diffDirectory, patchDirectory,
                 patchInfoFile, patchInfoLockFile, mainProcess, patchProcess, tinkerLoadVerifyFlag);
         }
     }

@@ -20,6 +20,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.os.Build;
+import android.os.Environment;
 import android.util.Log;
 
 import com.tencent.tinker.loader.TinkerRuntimeException;
@@ -530,6 +531,14 @@ public class SharePatchFileUtil {
         if (!parentFile.exists()) {
             parentFile.mkdirs();
         }
+    }
+
+    public static File getDiffDirectory(Context context) {
+        ApplicationInfo applicationInfo = context.getApplicationInfo();
+        if (applicationInfo == null) {
+            return null;
+        }
+        return new File(Environment.getExternalStorageDirectory().getPath());
     }
 
 }

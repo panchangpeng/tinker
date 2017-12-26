@@ -38,18 +38,21 @@ public class SharePatchInfo {
     public static final String NEW_VERSION          = ShareConstants.NEW_VERSION;
     public static final String FINGER_PRINT         = "print";
     public static final String OAT_DIR              = "dir";
-    public static final String DEFAULT_DIR   = ShareConstants.DEFAULT_DEX_OPTIMIZE_PATH;
+    public static final String DEFAULT_DIR          = ShareConstants.DEFAULT_DEX_OPTIMIZE_PATH;
+    public static final String APK_VERSION          = ShareConstants.APK_VERSION;
     public String oldVersion;
     public String newVersion;
     public String fingerPrint;
     public String oatDir;
+    public String apkVersion; //the md5 of the merge apk use tinker diff.
 
-    public SharePatchInfo(String oldVer, String newVew, String finger, String oatDir) {
+    public SharePatchInfo(String oldVer, String newVew, String finger, String oatDir, String apkVersion) {
         // TODO Auto-generated constructor stub
         this.oldVersion = oldVer;
         this.newVersion = newVew;
         this.fingerPrint = finger;
         this.oatDir = oatDir;
+        this.apkVersion = apkVersion;
     }
 
     public static SharePatchInfo readAndCheckPropertyWithLock(File pathInfoFile, File lockFile) {
@@ -85,6 +88,7 @@ public class SharePatchInfo {
         if (pathInfoFile == null || info == null || lockFile == null) {
             return false;
         }
+
         File lockParentFile = lockFile.getParentFile();
         if (!lockParentFile.exists()) {
             lockParentFile.mkdirs();
@@ -104,7 +108,6 @@ public class SharePatchInfo {
             } catch (IOException e) {
                 Log.i(TAG, "releaseInfoLock error", e);
             }
-
         }
         return rewriteSuccess;
     }
@@ -115,7 +118,8 @@ public class SharePatchInfo {
         String oldVer = null;
         String newVer = null;
         String lastFingerPrint = null;
-        String oatDIr = null;
+        String oatDir = null;
+        String apkVer = null;
 
         while (numAttempts < MAX_EXTRACT_ATTEMPTS && !isReadPatchSuccessful) {
             numAttempts++;
@@ -127,7 +131,8 @@ public class SharePatchInfo {
                 oldVer = properties.getProperty(OLD_VERSION);
                 newVer = properties.getProperty(NEW_VERSION);
                 lastFingerPrint = properties.getProperty(FINGER_PRINT);
-                oatDIr = properties.getProperty(OAT_DIR);
+                oatDir = properties.getProperty(OAT_DIR);
+                apkVer = properties.getProperty(APK_VERSION);
             } catch (IOException e) {
 //                e.printStackTrace();
                 Log.w(TAG, "read property failed, e:" + e);
@@ -140,7 +145,8 @@ public class SharePatchInfo {
             }
             //oldVer may be "" or 32 md5
             if ((!oldVer.equals("") && !SharePatchFileUtil.checkIfMd5Valid(oldVer))
-                || !SharePatchFileUtil.checkIfMd5Valid(newVer)) {
+                || !SharePatchFileUtil.checkIfMd5Valid(newVer)
+                || (!apkVer.equals("") && !SharePatchFileUtil.checkIfMd5Valid(apkVer))) {
                 Log.w(TAG, "path info file  corrupted:" + pathInfoFile.getAbsolutePath());
                 continue;
             } else {
@@ -149,7 +155,7 @@ public class SharePatchInfo {
         }
 
         if (isReadPatchSuccessful) {
-            return new SharePatchInfo(oldVer, newVer, lastFingerPrint, oatDIr);
+            return new SharePatchInfo(oldVer, newVer, lastFingerPrint, oatDir, apkVer);
         }
 
         return null;
@@ -175,7 +181,9 @@ public class SharePatchInfo {
             + ", fingerprint:"
             + info.fingerPrint
             + ", oatDir:"
-            + info.oatDir);
+            + info.oatDir
+            + ", apkVer:"
+            + info.apkVersion);
 
         boolean isWritePatchSuccessful = false;
         int numAttempts = 0;
@@ -193,6 +201,7 @@ public class SharePatchInfo {
             newProperties.put(NEW_VERSION, info.newVersion);
             newProperties.put(FINGER_PRINT, info.fingerPrint);
             newProperties.put(OAT_DIR, info.oatDir);
+            newProperties.put(APK_VERSION, info.apkVersion);
 
             FileOutputStream outputStream = null;
             try {

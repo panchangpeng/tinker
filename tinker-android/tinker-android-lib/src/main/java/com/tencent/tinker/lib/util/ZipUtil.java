@@ -1,27 +1,28 @@
 package com.tencent.tinker.lib.util;
 
-import com.tencent.tinker.ziputils.ziputil.TinkerZipEntry;
-import com.tencent.tinker.ziputils.ziputil.TinkerZipFile;
-import com.tencent.tinker.ziputils.ziputil.TinkerZipOutputStream;
 
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Created by cpan on 2017/12/20.
  */
 
-public class ZipUtils {
+public class ZipUtil {
     private static final int BUFFER_SIZE = 16384;
-    
-    public static void extractTinkerEntry(TinkerZipFile apk, TinkerZipEntry zipEntry, TinkerZipOutputStream outputStream) throws IOException {
+
+    public static void extractTinkerEntry(ZipFile apk, ZipEntry zipEntry, ZipOutputStream outputStream) throws IOException {
         InputStream in = null;
         try {
             in = apk.getInputStream(zipEntry);
-            outputStream.putNextEntry(new TinkerZipEntry(zipEntry));
+            outputStream.putNextEntry(zipEntry);
+            zipEntry.setMethod(ZipEntry.DEFLATED);
             byte[] buffer = new byte[BUFFER_SIZE];
 
             for (int length = in.read(buffer); length != -1; length = in.read(buffer)) {
@@ -35,7 +36,7 @@ public class ZipUtils {
         }
     }
 
-    public static void extractTinkerEntry(TinkerZipEntry zipEntry, InputStream inputStream, TinkerZipOutputStream outputStream) throws IOException {
+    public static void extractTinkerEntry(ZipEntry zipEntry, InputStream inputStream, ZipOutputStream outputStream) throws IOException {
         outputStream.putNextEntry(zipEntry);
         byte[] buffer = new byte[BUFFER_SIZE];
 
@@ -45,17 +46,17 @@ public class ZipUtils {
         outputStream.closeEntry();
     }
 
-    public static void extractLargeModifyFile(TinkerZipEntry sourceArscEntry, File newFile, long newFileCrc, TinkerZipOutputStream outputStream) throws IOException {
-        TinkerZipEntry newArscZipEntry = new TinkerZipEntry(sourceArscEntry);
+    public static void extractLargeModifyFile(ZipEntry sourceArscEntry, File newFile, long newFileCrc, ZipOutputStream outputStream) throws IOException {
+        ZipEntry newArscZipEntry = new ZipEntry(sourceArscEntry);
 
-        newArscZipEntry.setMethod(TinkerZipEntry.STORED);
+        newArscZipEntry.setMethod(ZipEntry.STORED);
         newArscZipEntry.setSize(newFile.length());
         newArscZipEntry.setCompressedSize(newFile.length());
         newArscZipEntry.setCrc(newFileCrc);
         BufferedInputStream in = null;
         try {
             in = new BufferedInputStream(new FileInputStream(newFile));
-            outputStream.putNextEntry(new TinkerZipEntry(newArscZipEntry));
+            outputStream.putNextEntry(new ZipEntry(newArscZipEntry));
             byte[] buffer = new byte[BUFFER_SIZE];
 
             for (int length = in.read(buffer); length != -1; length = in.read(buffer)) {
@@ -69,11 +70,13 @@ public class ZipUtils {
         }
     }
 
-    public static void extractTinkerEntry(TinkerZipFile apk, TinkerZipEntry zipEntry, String name, TinkerZipOutputStream outputStream) throws IOException {
+    public static void extractTinkerEntry(ZipFile apk, ZipEntry zipEntry, String name, ZipOutputStream outputStream) throws IOException {
         InputStream in = null;
         try {
             in = apk.getInputStream(zipEntry);
-            outputStream.putNextEntry(new TinkerZipEntry(zipEntry, name));
+            ZipEntry z = new ZipEntry(name);
+            //z.setMethod(ZipEntry.DEFLATED);
+            outputStream.putNextEntry(z);
             byte[] buffer = new byte[BUFFER_SIZE];
 
             for (int length = in.read(buffer); length != -1; length = in.read(buffer)) {

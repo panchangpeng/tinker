@@ -206,11 +206,12 @@ public class DefaultLoadReporter implements LoadReporter {
      * return codes are define in {@link com.tencent.tinker.loader.shareutil.ShareConstants}
      *
      * @param patchDirectory the root patch directory {you_apk_data}/tinker
+     * @param apkFile        the file of new apk. If it is apk diff mode
      * @param loadCode       {@code ShareConstants.ERROR_LOAD_OK}, 0 means success
      * @param cost           time in ms
      */
     @Override
-    public void onLoadResult(File patchDirectory, int loadCode, long cost) {
+    public void onLoadResult(File patchDirectory, File apkFile, int loadCode, long cost) {
         TinkerLog.i(TAG, "patch loadReporter onLoadResult: patch load result, path:%s, code: %d, cost: %dms", patchDirectory.getAbsolutePath(), loadCode, cost);
         //you can just report the result here
     }

@@ -46,6 +46,7 @@ public class UpgradePatch extends AbstractPatch {
 
         final File patchFile = new File(tempPatchPath);
 
+        // keep this flag for control tinker enable
         if (!manager.isTinkerEnabled() || !ShareTinkerInternals.isTinkerEnableWithSharedPreferences(context)) {
             TinkerLog.e(TAG, "UpgradePatch tryPatch:patch is disabled, just return");
             return false;
@@ -57,13 +58,13 @@ public class UpgradePatch extends AbstractPatch {
         }
         //check the signature, we should create a new checker
         ShareSecurityCheck signatureCheck = new ShareSecurityCheck(context);
-        int patchMode = ShareConstants.PATCH_MODE_HOT;
-        String patchMeta = signatureCheck.getMetaContentMap().get(ShareConstants.PATCH_META_FILE);
-        if (patchMeta != null) {
-            patchMode = signatureCheck.getPatchMetaPropertiesIfPresent().get(ShareConstants.PATCH_MODE);
+        signatureCheck.verifyPatchMetaSignature(patchFile);
+        String mode = signatureCheck.getPatchMetaPropertiesIfPresent().get(ShareConstants.PATCH_MODE);
+        TinkerLog.i(TAG, "UpgradePatch Mode :%s", mode);
+        int patchMode = 0;
+        if (mode != null && mode.length() > 0) {
+            patchMode = Integer.valueOf(mode);
         }
-        TinkerLog.i(TAG, "UpgradePatch Mode :%d", patchMode);
-
         int returnCode = ShareTinkerInternals.checkTinkerPackage(context, manager.getTinkerFlags(), patchFile, signatureCheck);
         if (returnCode != ShareConstants.ERROR_PACKAGE_CHECK_OK) {
             TinkerLog.e(TAG, "UpgradePatch tryPatch:onPatchPackageCheckFail");
@@ -108,9 +109,9 @@ public class UpgradePatch extends AbstractPatch {
             // if it is interpret now, use changing flag to wait main process
             final String finalOatDir = oldInfo.oatDir.equals(ShareConstants.INTERPRET_DEX_OPTIMIZE_PATH)
                 ? ShareConstants.CHANING_DEX_OPTIMIZE_PATH : oldInfo.oatDir;
-            newInfo = new SharePatchInfo(oldInfo.oldVersion, patchMd5, Build.FINGERPRINT, finalOatDir);
+            newInfo = new SharePatchInfo(oldInfo.oldVersion, patchMd5, Build.FINGERPRINT, finalOatDir, oldInfo.apkVersion);
         } else {
-            newInfo = new SharePatchInfo("", patchMd5, Build.FINGERPRINT, ShareConstants.DEFAULT_DEX_OPTIMIZE_PATH);
+            newInfo = new SharePatchInfo("", patchMd5, Build.FINGERPRINT, ShareConstants.DEFAULT_DEX_OPTIMIZE_PATH, "");
         }
 
         //it is a new patch, we first delete if there is any files
@@ -119,6 +120,13 @@ public class UpgradePatch extends AbstractPatch {
         final String patchName = SharePatchFileUtil.getPatchVersionDirectory(patchMd5);
 
         final String patchVersionDirectory = patchDirectory + "/" + patchName;
+
+        final String diffDirectory = manager.getDiffDirectory().getPath();
+
+        File diffDirectoryFile = new File(diffDirectory);
+        if (!diffDirectoryFile.exists()) {
+            diffDirectoryFile.mkdirs();
+        }
 
         TinkerLog.i(TAG, "UpgradePatch tryPatch:patchVersionDirectory:%s", patchVersionDirectory);
 
@@ -161,14 +169,19 @@ public class UpgradePatch extends AbstractPatch {
             return false;
         }
 
-        // gen new apk
-        if (!ApkDiffPatchInternal.tryRecoverApkFiles(manager, signatureCheck, context, patchVersionDirectory, destPatchFile)) {
-            TinkerLog.e(TAG, "UpgradePatch tryPatch:new patch recover, try recover apk failed");
+        if (patchMode == ShareConstants.PATCH_MODE_HOT) {
+            if (!SharePatchInfo.rewritePatchInfoFileWithLock(patchInfoFile, newInfo, patchInfoLockFile)) {
+                TinkerLog.e(TAG, "UpgradePatch tryPatch:new patch recover, rewrite patch info failed");
+                manager.getPatchReporter().onPatchInfoCorrupted(patchFile, newInfo.oldVersion, newInfo.newVersion);
+                return false;
+            }
+        } else {
+            TinkerLog.i(TAG, "UpgradePatch tryPatch:It's diff mode write patch info file in next step.");
         }
 
-        if (!SharePatchInfo.rewritePatchInfoFileWithLock(patchInfoFile, newInfo, patchInfoLockFile)) {
-            TinkerLog.e(TAG, "UpgradePatch tryPatch:new patch recover, rewrite patch info failed");
-            manager.getPatchReporter().onPatchInfoCorrupted(patchFile, newInfo.oldVersion, newInfo.newVersion);
+        // gen new apk
+        if (!ApkDiffPatchInternal.tryRecoverApkFiles(manager, signatureCheck, context, diffDirectory, patchVersionDirectory, destPatchFile, patchMode, newInfo, patchInfoFile, patchInfoLockFile)) {
+            TinkerLog.e(TAG, "UpgradePatch tryPatch:new patch recover, try recover apk failed");
             return false;
         }
 

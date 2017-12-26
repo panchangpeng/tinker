@@ -16,6 +16,8 @@
 
 package com.tencent.tinker.lib.service;
 
+import com.tencent.tinker.loader.shareutil.ShareConstants;
+
 import java.io.Serializable;
 
 /**
@@ -33,6 +35,10 @@ public class PatchResult implements Serializable {
     //@Nullable
     public String patchVersion;
 
+    public String apkFilePath;
+
+    public int    patchMode;
+
     @Override
     public String toString() {
         StringBuffer sb = new StringBuffer();
@@ -46,6 +52,9 @@ public class PatchResult implements Serializable {
 
         if (e != null) {
             sb.append("Throwable:" + e.getMessage() + "\n");
+        }
+        if (patchMode == ShareConstants.PATCH_MODE_DIFF) {
+            sb.append("apkFilePath:" + apkFilePath + "\n");
         }
         return sb.toString();
     }

@@ -72,6 +72,8 @@ public class TinkerLoadResult {
 
     public long costTime;
 
+    public File newApkFile;
+
     public boolean parseTinkerResult(Context context, Intent intentResult) {
         Tinker tinker = Tinker.with(context);
         loadCode = ShareIntentUtil.getIntentReturnCode(intentResult);
@@ -91,8 +93,11 @@ public class TinkerLoadResult {
         //@Nullable
         final String newVersion = ShareIntentUtil.getStringExtra(intentResult, ShareIntentUtil.INTENT_PATCH_NEW_VERSION);
 
+        final String tinkerId = ShareIntentUtil.getStringExtra(intentResult, ShareIntentUtil.INTENT_PATCH_TINKER_ID);
+
         final File patchDirectory = tinker.getPatchDirectory();
         final File patchInfoFile = tinker.getPatchInfoFile();
+        final File patchDiffDirectory = tinker.getDiffDirectory();
 
         if (oldVersion != null && newVersion != null) {
             if (isMainProcess) {
@@ -113,9 +118,11 @@ public class TinkerLoadResult {
                 resourceDirectory = new File(patchVersionDirectory, ShareConstants.RES_PATH);
                 resourceFile = new File(resourceDirectory, ShareConstants.RES_NAME);
             }
-            patchInfo = new SharePatchInfo(oldVersion, newVersion, Build.FINGERPRINT, oatDir);
+            patchInfo = new SharePatchInfo(oldVersion, newVersion, Build.FINGERPRINT, oatDir, "");
             versionChanged = !(oldVersion.equals(newVersion));
         }
+
+        newApkFile = new File(patchDiffDirectory, tinkerId + ShareConstants.PATCH_SUFFIX);
 
         //found uncaught exception, just return
         Throwable exception = ShareIntentUtil.getIntentPatchException(intentResult);

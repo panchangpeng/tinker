@@ -26,6 +26,8 @@ import com.tencent.tinker.lib.service.AbstractResultService;
 import com.tencent.tinker.lib.util.TinkerLog;
 import com.tencent.tinker.loader.app.ApplicationLike;
 
+import java.io.File;
+
 /**
  * Created by zhangshaowen on 16/3/19.
  */
@@ -58,9 +60,10 @@ public class TinkerInstaller {
      */
     public static Tinker install(ApplicationLike applicationLike, LoadReporter loadReporter, PatchReporter patchReporter,
                                PatchListener listener, Class<? extends AbstractResultService> resultServiceClass,
-                               AbstractPatch upgradePatchProcessor) {
+                               AbstractPatch upgradePatchProcessor, File directory) {
 
         Tinker tinker = new Tinker.Builder(applicationLike.getApplication())
+            .setDiffDirectory(directory)
             .tinkerFlags(applicationLike.getTinkerFlags())
             .loadReport(loadReporter)
             .listener(listener)

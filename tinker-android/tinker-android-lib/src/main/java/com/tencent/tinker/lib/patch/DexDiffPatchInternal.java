@@ -87,8 +87,8 @@ public class DexDiffPatchInternal extends BasePatchInternal {
         return result;
     }
 
-    protected static boolean waitAndCheckDexOptFile(File patchFile, Tinker manager, int mode) {
-        if (mode == ShareConstants.PATCH_MODE_DIFF) {
+    protected static boolean waitAndCheckDexOptFile(File patchFile, Tinker manager, int patchMode) {
+        if (patchMode == ShareConstants.PATCH_MODE_DIFF) {
             return true;
         }
         if (optFiles.isEmpty()) {

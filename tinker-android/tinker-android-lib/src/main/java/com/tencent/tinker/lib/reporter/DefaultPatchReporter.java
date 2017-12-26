@@ -214,4 +214,43 @@ public class DefaultPatchReporter implements PatchReporter {
         }
     }
 
+    /**
+     *
+     * @param patchFile         the loading path file
+     * @param newApkFile        the output apk in data/data
+     * @param newApkAlignFile   the output apk in sdcard
+     * @param errorCode         0 is oK, you should define the errorCode yourself
+     *                          {@code ShareConstants.ERROR_DIFF_OK}                            it is ok
+     *                          {@code ShareConstants.ERROR_DIFF_MISS_MANIFEST}                 missed AndroidManifest.xml
+     *                          {@code ShareConstants.ERROR_DIFF_MISS_MATE_INF}                 messed MATE-INF folder
+     *                          {@code ShareConstants.ERROR_DIFF_GEN_APK_FAILED}                create apk file failed
+     */
+    @Override
+    public void onPatchDiffFail(File patchFile, File newApkFile, File newApkAlignFile, int errorCode) {
+        TinkerLog.i(TAG, "patchReporter onPatchDiffFail.  path: %s, code: %d",
+                patchFile.getAbsolutePath(), errorCode);
+        if (errorCode != ShareConstants.ERROR_DIFF_OK) {
+            //Tinker.with(context).cleanDiff();
+            SharePatchFileUtil.safeDeleteFile(newApkFile);
+            SharePatchFileUtil.safeDeleteFile(newApkAlignFile);
+        }
+    }
+
+    /**
+     * @param patchFile         the loading path file
+     * @param newApkFile        the output apk in data/data
+     * @param newApkAlignFile   the output apk in sdcard
+     * @param e                 the exception of diff
+     */
+    @Override
+    public void onDiffException(File patchFile, File newApkFile, File newApkAlignFile, Throwable e) {
+        TinkerLog.i(TAG, "patchReporter onDiffException: patch exception path: %s, throwable: %s",
+                patchFile.getAbsolutePath(), e.getMessage());
+        TinkerLog.e(TAG, "tinker patch exception, welcome to submit issue to us: https://github.com/Tencent/tinker/issues");
+        //Tinker.with(context).cleanDiff();
+        SharePatchFileUtil.safeDeleteFile(newApkFile);
+        SharePatchFileUtil.safeDeleteFile(newApkAlignFile);
+    }
+
+
 }

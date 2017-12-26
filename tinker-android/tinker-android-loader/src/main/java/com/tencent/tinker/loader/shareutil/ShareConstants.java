@@ -37,6 +37,7 @@ public class ShareConstants {
 
     public static final String OLD_VERSION     = "old";
     public static final String NEW_VERSION     = "new";
+    public static final String APK_VERSION     = "apk";
     public static final String PATCH_BASE_NAME = "patch-";
     public static final String PATCH_SUFFIX    = ".apk";
 
@@ -92,7 +93,6 @@ public class ShareConstants {
 
     public static final String RES_APK_META_FILES       = "assets/APK-META-INF";
     public static final String RES_APK_META_INF         = "META-INF";
-    public static final String RES_APK_NAME             = "rebuild-sign.apk";
 
     public static final String DEXMODE_RAW = "raw";
     public static final String DEXMODE_JAR = "jar";
@@ -150,6 +150,7 @@ public class ShareConstants {
 
     //load error code
     public static final int ERROR_LOAD_OK                                      = 0;
+    public static final int ERROR_LOAD_APK_OK                                  = 1;
     public static final int ERROR_LOAD_DISABLE                                 = -1;
     public static final int ERROR_LOAD_PATCH_DIRECTORY_NOT_EXIST               = -2;
     public static final int ERROR_LOAD_PATCH_INFO_NOT_EXIST                    = -3;
@@ -215,6 +216,12 @@ public class ShareConstants {
     public static final int TYPE_INTERPRET_OK                        = 0;
     public static final int TYPE_INTERPRET_GET_INSTRUCTION_SET_ERROR = 1;
     public static final int TYPE_INTERPRET_COMMAND_ERROR             = 2;
+
+    // apk diff error code
+    public static final int ERROR_DIFF_OK             = 0;
+    public static final int ERROR_DIFF_MISS_MANIFEST  = -1;
+    public static final int ERROR_DIFF_MISS_MATE_INF  = -2;
+    public static final int ERROR_DIFF_GEN_APK_FAILED = -3;
 
 
 }

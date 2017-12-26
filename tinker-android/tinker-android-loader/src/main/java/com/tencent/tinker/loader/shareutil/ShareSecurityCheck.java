@@ -47,7 +47,7 @@ public class ShareSecurityCheck {
     private final Context                 mContext;
     private final HashMap<String, String> metaContentMap;
     private final HashMap<String, String> packageProperties;
-    private final HashMap<String, Integer> patchMetaProperties;
+    private final HashMap<String, String> patchMetaProperties;
 
     public ShareSecurityCheck(Context context) {
         mContext = context;
@@ -182,9 +182,9 @@ public class ShareSecurityCheck {
     /**
      * Nullable
      *
-     * @return HashMap<String, Integer>
+     * @return HashMap<String, String>
      */
-    public HashMap<String, Integer> getPatchMetaPropertiesIfPresent() {
+    public HashMap<String, String> getPatchMetaPropertiesIfPresent() {
         if (!patchMetaProperties.isEmpty()) {
             return patchMetaProperties;
         }
@@ -209,7 +209,7 @@ public class ShareSecurityCheck {
                 continue;
             }
 
-            patchMetaProperties.put(kv[0].trim(), Integer.valueOf(kv[1].trim()));
+            patchMetaProperties.put(kv[0].trim(), kv[1].trim());
         }
         return patchMetaProperties;
     }

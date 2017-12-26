@@ -107,7 +107,7 @@ public class ResDiffDecoder extends BaseDecoder {
         //actually, it won't go below
         if (newFile == null || !newFile.exists()) {
             String relativeStringByOldDir = getRelativePathStringToOldFile(oldFile);
-            if (Utils.checkFileInPattern(config.mResIgnoreChangePattern, relativeStringByOldDir) && !config.mApkPatchMode) {
+            if (Utils.checkFileInPattern(config.mResIgnoreChangePattern, relativeStringByOldDir)) {
                 Logger.e("found delete resource: " + relativeStringByOldDir + " ,but it match ignore change pattern, just ignore!");
                 return false;
             }
@@ -119,7 +119,7 @@ public class ResDiffDecoder extends BaseDecoder {
         File outputFile = getOutputPath(newFile).toFile();
 
         if (oldFile == null || !oldFile.exists()) {
-            if (Utils.checkFileInPattern(config.mResIgnoreChangePattern, name) && !config.mApkPatchMode) {
+            if (Utils.checkFileInPattern(config.mResIgnoreChangePattern, name)) {
                 Logger.e("found add resource: " + name + " ,but it match ignore change pattern, just ignore!");
                 return false;
             }
@@ -140,7 +140,7 @@ public class ResDiffDecoder extends BaseDecoder {
         if (oldMd5 != null && oldMd5.equals(newMd5)) {
             return false;
         }
-        if (Utils.checkFileInPattern(config.mResIgnoreChangePattern, name) && !config.mApkPatchMode) {
+        if (Utils.checkFileInPattern(config.mResIgnoreChangePattern, name)) {
             Logger.d("found modify resource: " + name + ", but it match ignore change pattern, just ignore!");
             return false;
         }

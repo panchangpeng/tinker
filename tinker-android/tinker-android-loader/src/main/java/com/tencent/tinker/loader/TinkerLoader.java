@@ -114,6 +114,7 @@ public class TinkerLoader extends AbstractTinkerLoader {
         String oldVersion = patchInfo.oldVersion;
         String newVersion = patchInfo.newVersion;
         String oatDex = patchInfo.oatDir;
+        String apkVersion = patchInfo.apkVersion;
 
         if (oldVersion == null || newVersion == null || oatDex == null) {
             //it is nice to clean patch
@@ -124,6 +125,7 @@ public class TinkerLoader extends AbstractTinkerLoader {
 
         resultIntent.putExtra(ShareIntentUtil.INTENT_PATCH_OLD_VERSION, oldVersion);
         resultIntent.putExtra(ShareIntentUtil.INTENT_PATCH_NEW_VERSION, newVersion);
+        resultIntent.putExtra(ShareIntentUtil.INTENT_PATCH_APK_VERSION, apkVersion);
 
         boolean mainProcess = ShareTinkerInternals.isInMainProcess(app);
         boolean versionChanged = !(oldVersion.equals(newVersion));
@@ -185,7 +187,18 @@ public class TinkerLoader extends AbstractTinkerLoader {
 
         resultIntent.putExtra(ShareIntentUtil.INTENT_PATCH_PACKAGE_CONFIG, securityCheck.getPackagePropertiesIfPresent());
 
-        final boolean isEnabledForDex = ShareTinkerInternals.isTinkerEnabledForDex(tinkerFlag);
+        String mode = securityCheck.getPatchMetaPropertiesIfPresent().get(ShareConstants.PATCH_MODE);
+        Log.i(TAG, "tryLoadPatchFiles patch mode " + mode);
+        int patchMode = 0;
+        if (mode != null && mode.length() > 0) {
+            patchMode = Integer.valueOf(mode);
+        }
+        resultIntent.putExtra(ShareIntentUtil.INTENT_PATCH_MODE, patchMode);
+        final boolean isHotPatchMode = (patchMode == ShareConstants.PATCH_MODE_HOT);
+
+        resultIntent.putExtra(ShareIntentUtil.INTENT_PATCH_TINKER_ID, securityCheck.getPackagePropertiesIfPresent().get(ShareConstants.TINKER_ID));
+
+        final boolean isEnabledForDex = ShareTinkerInternals.isTinkerEnabledForDex(tinkerFlag) && isHotPatchMode;
 
         if (isEnabledForDex) {
             //tinker/patch.info/patch-641e634c/dex
@@ -197,7 +210,7 @@ public class TinkerLoader extends AbstractTinkerLoader {
             }
         }
 
-        final boolean isEnabledForNativeLib = ShareTinkerInternals.isTinkerEnabledForNativeLib(tinkerFlag);
+        final boolean isEnabledForNativeLib = ShareTinkerInternals.isTinkerEnabledForNativeLib(tinkerFlag) && isHotPatchMode;
 
         if (isEnabledForNativeLib) {
             //tinker/patch.info/patch-641e634c/lib
@@ -210,7 +223,7 @@ public class TinkerLoader extends AbstractTinkerLoader {
         }
 
         //check resource
-        final boolean isEnabledForResource = ShareTinkerInternals.isTinkerEnabledForResource(tinkerFlag);
+        final boolean isEnabledForResource = ShareTinkerInternals.isTinkerEnabledForResource(tinkerFlag) && isHotPatchMode;
         Log.w(TAG, "tryLoadPatchFiles:isEnabledForResource:" + isEnabledForResource);
         if (isEnabledForResource) {
             boolean resourceCheck = TinkerResourceLoader.checkComplete(app, patchVersionDirectory, securityCheck, resultIntent);
@@ -294,12 +307,16 @@ public class TinkerLoader extends AbstractTinkerLoader {
         }
 
         // kill all other process if oat mode change
-        if (oatModeChanged) {
+        if (oatModeChanged && isHotPatchMode) {
             ShareTinkerInternals.killAllOtherProcess(app);
             Log.i(TAG, "tryLoadPatchFiles:oatModeChanged, try to kill all other process");
         }
         //all is ok!
-        ShareIntentUtil.setIntentReturnCode(resultIntent, ShareConstants.ERROR_LOAD_OK);
+        if (isHotPatchMode) {
+            ShareIntentUtil.setIntentReturnCode(resultIntent, ShareConstants.ERROR_LOAD_OK);
+        } else {
+            ShareIntentUtil.setIntentReturnCode(resultIntent, ShareConstants.ERROR_LOAD_APK_OK);
+        }
         Log.i(TAG, "tryLoadPatchFiles: load end, ok!");
         return;
     }

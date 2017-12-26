@@ -148,6 +148,7 @@ public abstract class TinkerApplication extends Application {
         onBaseContextAttached(base);
     }
 
+    // load
     private void loadTinker() {
         //disable tinker, not need to install
         if (tinkerFlags == TINKER_DISABLE) {

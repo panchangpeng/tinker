@@ -45,8 +45,8 @@ public class SampleLoadReporter extends DefaultLoadReporter {
     }
 
     @Override
-    public void onLoadResult(File patchDirectory, int loadCode, long cost) {
-        super.onLoadResult(patchDirectory, loadCode, cost);
+    public void onLoadResult(File patchDirectory, File apkFile, int loadCode, long cost) {
+        super.onLoadResult(patchDirectory, apkFile, loadCode, cost);
         switch (loadCode) {
             case ShareConstants.ERROR_LOAD_OK:
                 SampleTinkerReport.onLoaded(cost);

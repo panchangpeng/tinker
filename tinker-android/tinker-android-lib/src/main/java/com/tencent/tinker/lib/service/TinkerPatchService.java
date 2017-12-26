@@ -31,6 +31,7 @@ import com.tencent.tinker.lib.util.TinkerLog;
 import com.tencent.tinker.loader.TinkerRuntimeException;
 import com.tencent.tinker.loader.shareutil.ShareConstants;
 import com.tencent.tinker.loader.shareutil.ShareIntentUtil;
+import com.tencent.tinker.loader.shareutil.ShareSecurityCheck;
 
 import java.io.File;
 
@@ -136,6 +137,20 @@ public class TinkerPatchService extends IntentService {
         cost = SystemClock.elapsedRealtime() - begin;
         tinker.getPatchReporter().
             onPatchResult(patchFile, result, cost);
+
+        ShareSecurityCheck checker = new ShareSecurityCheck(context);
+        checker.verifyPatchMetaSignature(patchFile);
+        String tinkerId = checker.getPackagePropertiesIfPresent().get(ShareConstants.TINKER_ID);
+        String newApkAlignPath = tinker.getDiffDirectory() + File.separator + ShareConstants.PATCH_DIRECTORY_NAME + File.separator + tinkerId + "_align.apk";
+
+        String mode = checker.getPatchMetaPropertiesIfPresent().get(ShareConstants.PATCH_MODE);
+        TinkerLog.i(TAG, "tryLoadPatchFiles patch mode " + mode);
+        int patchMode = 0;
+        if (mode != null && mode.length() > 0) {
+            patchMode = Integer.valueOf(mode);
+        }
+        patchResult.patchMode = patchMode;
+        patchResult.apkFilePath = newApkAlignPath;
 
         patchResult.isSuccess = result;
         patchResult.rawPatchFilePath = path;

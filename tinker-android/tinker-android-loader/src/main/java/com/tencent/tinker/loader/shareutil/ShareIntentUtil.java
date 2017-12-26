@@ -33,6 +33,7 @@ public class ShareIntentUtil {
     public static final  String INTENT_RETURN_CODE               = "intent_return_code";
     public static final  String INTENT_PATCH_OLD_VERSION         = "intent_patch_old_version";
     public static final  String INTENT_PATCH_NEW_VERSION         = "intent_patch_new_version";
+    public static final  String INTENT_PATCH_APK_VERSION         = "intent_patch_apk_version";
     public static final  String INTENT_PATCH_MISMATCH_DEX_PATH   = "intent_patch_mismatch_dex_path";
     public static final  String INTENT_PATCH_MISSING_DEX_PATH    = "intent_patch_missing_dex_path";
     public static final  String INTENT_PATCH_DEXES_PATH          = "intent_patch_dexes_path";
@@ -46,7 +47,8 @@ public class ShareIntentUtil {
     public static final  String INTENT_PATCH_SYSTEM_OTA          = "intent_patch_system_ota";
     public static final  String INTENT_PATCH_OAT_DIR             = "intent_patch_oat_dir";
     public static final  String INTENT_PATCH_INTERPRET_EXCEPTION = "intent_patch_interpret_exception";
-
+    public static final  String INTENT_PATCH_MODE                = "intent_patch_mode";
+    public static final  String INTENT_PATCH_TINKER_ID           = "intent_patch_tinker_id";
 
     private static final String TAG                              = "ShareIntentUtil";
 
