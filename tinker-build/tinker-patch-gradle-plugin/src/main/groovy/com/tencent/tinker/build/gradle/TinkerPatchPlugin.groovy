@@ -53,6 +53,8 @@ class TinkerPatchPlugin implements Plugin<Project> {
         project.tinkerPatch.extensions.create('res', TinkerResourceExtension)
         project.tinkerPatch.extensions.create('packageConfig', TinkerPackageConfigExtension, project)
         project.tinkerPatch.extensions.create('sevenZip', TinkerSevenZipExtension, project)
+        project.tinkerPatch.extensions.create('zipAlign', TinkerZipAlignExtension)
+
 
         if (!project.plugins.hasPlugin('com.android.application')) {
             throw new GradleException('generateTinkerApk: Android Application plugin required')

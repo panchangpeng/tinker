@@ -21,7 +21,7 @@ public class ZipUtil {
         InputStream in = null;
         try {
             in = apk.getInputStream(zipEntry);
-            outputStream.putNextEntry(zipEntry);
+            outputStream.putNextEntry(new ZipEntry(zipEntry.getName()));
             zipEntry.setMethod(ZipEntry.DEFLATED);
             byte[] buffer = new byte[BUFFER_SIZE];
 

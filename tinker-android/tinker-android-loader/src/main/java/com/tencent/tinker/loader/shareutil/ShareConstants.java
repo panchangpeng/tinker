@@ -93,6 +93,7 @@ public class ShareConstants {
 
     public static final String RES_APK_META_FILES       = "assets/APK-META-INF";
     public static final String RES_APK_META_INF         = "META-INF";
+    public static final String RES_CLAZZ_META_FILES = "assets/secondary-program-dex-jars/metadata.txt";
 
     public static final String DEXMODE_RAW = "raw";
     public static final String DEXMODE_JAR = "jar";

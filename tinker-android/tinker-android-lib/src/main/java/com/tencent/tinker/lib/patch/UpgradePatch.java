@@ -59,7 +59,10 @@ public class UpgradePatch extends AbstractPatch {
         //check the signature, we should create a new checker
         ShareSecurityCheck signatureCheck = new ShareSecurityCheck(context);
         signatureCheck.verifyPatchMetaSignature(patchFile);
-        String mode = signatureCheck.getPatchMetaPropertiesIfPresent().get(ShareConstants.PATCH_MODE);
+        String mode = "";
+        if (signatureCheck.getPatchMetaPropertiesIfPresent() != null) {
+            mode = signatureCheck.getPatchMetaPropertiesIfPresent().get(ShareConstants.PATCH_MODE);
+        }
         TinkerLog.i(TAG, "UpgradePatch Mode :%s", mode);
         int patchMode = 0;
         if (mode != null && mode.length() > 0) {

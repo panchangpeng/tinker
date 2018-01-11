@@ -140,10 +140,13 @@ public class TinkerPatchService extends IntentService {
 
         ShareSecurityCheck checker = new ShareSecurityCheck(context);
         checker.verifyPatchMetaSignature(patchFile);
-        String tinkerId = checker.getPackagePropertiesIfPresent().get(ShareConstants.TINKER_ID);
-        String newApkAlignPath = tinker.getDiffDirectory() + File.separator + ShareConstants.PATCH_DIRECTORY_NAME + File.separator + tinkerId + "_align.apk";
+        String newTinkerId = checker.getPackagePropertiesIfPresent().get(ShareConstants.NEW_TINKER_ID);
+        String newApkAlignPath = tinker.getDiffDirectory() + File.separator + ShareConstants.PATCH_DIRECTORY_NAME + File.separator + newTinkerId + "_align.apk";
 
-        String mode = checker.getPatchMetaPropertiesIfPresent().get(ShareConstants.PATCH_MODE);
+        String mode = "";
+        if (checker.getPatchMetaPropertiesIfPresent() != null) {
+            mode = checker.getPatchMetaPropertiesIfPresent().get(ShareConstants.PATCH_MODE);
+        }
         TinkerLog.i(TAG, "tryLoadPatchFiles patch mode " + mode);
         int patchMode = 0;
         if (mode != null && mode.length() > 0) {

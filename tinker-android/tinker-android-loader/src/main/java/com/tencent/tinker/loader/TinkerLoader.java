@@ -187,7 +187,10 @@ public class TinkerLoader extends AbstractTinkerLoader {
 
         resultIntent.putExtra(ShareIntentUtil.INTENT_PATCH_PACKAGE_CONFIG, securityCheck.getPackagePropertiesIfPresent());
 
-        String mode = securityCheck.getPatchMetaPropertiesIfPresent().get(ShareConstants.PATCH_MODE);
+        String mode = "";
+        if (securityCheck.getPatchMetaPropertiesIfPresent() != null) {
+            mode = securityCheck.getPatchMetaPropertiesIfPresent().get(ShareConstants.PATCH_MODE);
+        }
         Log.i(TAG, "tryLoadPatchFiles patch mode " + mode);
         int patchMode = 0;
         if (mode != null && mode.length() > 0) {

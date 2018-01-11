@@ -59,12 +59,12 @@ public class ApkDiffPatchInternal extends BasePatchInternal {
         }
 
 
-        String tinkerId = checker.getPackagePropertiesIfPresent().get(ShareConstants.TINKER_ID);
-        TinkerLog.w(TAG, "cpan try to recover apk start. tinkerId:%s", tinkerId);
+        String newTinkerId = checker.getPackagePropertiesIfPresent().get(ShareConstants.NEW_TINKER_ID);
+        TinkerLog.w(TAG, "cpan try to recover apk start. newTinkerId:%s", newTinkerId);
 
         String oldApkPath = applicationInfo.sourceDir;
-        String newApkPath = directory + File.separator + tinkerId + ".apk";
-        String newApkAlignPath = diffDirectory + File.separator + ShareConstants.PATCH_DIRECTORY_NAME + File.separator + tinkerId + "_align.apk";
+        String newApkPath = directory + File.separator + newTinkerId + ".apk";
+        String newApkAlignPath = diffDirectory + File.separator + ShareConstants.PATCH_DIRECTORY_NAME + File.separator + newTinkerId + "_align.apk";
         TinkerLog.d(TAG, "oldApkPath:%s newApkPath:%s newApkAlignPath:%s", oldApkPath, newApkPath, newApkAlignPath);
 
         File newApkFile = new File(newApkPath);
@@ -117,6 +117,18 @@ public class ApkDiffPatchInternal extends BasePatchInternal {
 
             ZipUtil.extractTinkerEntry(patchZipFile, manifestZipEntry, out);
             TinkerLog.d(TAG, "copy AndroidManifest.xml from patch zip.");
+
+            // copy secondary-program-dex-jars/metadata.txt
+            ZipEntry clazzMetaEntry = patchZipFile.getEntry(ShareConstants.RES_CLAZZ_META_FILES);
+            if (clazzMetaEntry != null) {
+                TinkerLog.w(TAG, "metadata patch entry is null. path:" + ShareConstants.RES_MANIFEST);
+                //manager.getPatchReporter().onPatchDiffFail(patchFile, newApkFile, newApkAlignFile, ShareConstants.ERROR_DIFF_MISS_MANIFEST);
+                //return false;
+                ZipUtil.extractTinkerEntry(patchZipFile, clazzMetaEntry, out);
+                TinkerLog.d(TAG, "copy secondary-program-dex-jars/metadata.txt from patch zip.");
+            } else {
+                TinkerLog.d(TAG, "copy secondary-program-dex-jars/metadata.txt failed. can't find.");
+            }
 
             // copy new apk meta inf
             final Enumeration<? extends ZipEntry> metaInfEntries = patchZipFile.entries();
@@ -220,7 +232,7 @@ public class ApkDiffPatchInternal extends BasePatchInternal {
                     }
 
                     if (!zipEntry.isDirectory() && !zipNameAdded.contains(name) && !name.equalsIgnoreCase(ShareConstants.RES_MANIFEST)) {
-                        TinkerLog.d(TAG, "copy %s from resource.apk.", name);
+                        //TinkerLog.d(TAG, "copy %s from resource.apk.", name);
                         ZipUtil.extractTinkerEntry(resourceZipFile, zipEntry, out);
                         zipNameAdded.add(name);
                     } else {
@@ -247,7 +259,7 @@ public class ApkDiffPatchInternal extends BasePatchInternal {
                         && !name.startsWith(ShareConstants.RES_APK_META_INF)) {
                     ZipUtil.extractTinkerEntry(oldApkZipFile, zipEntry, out);
                     zipNameAdded.add(name);
-                    TinkerLog.d(TAG, "copy %s from old apk.", name);
+                    // TinkerLog.d(TAG, "copy %s from old apk.", name);
                 } else {
                     TinkerLog.d(TAG, "skip copy %s from old apk.", name);
                 }

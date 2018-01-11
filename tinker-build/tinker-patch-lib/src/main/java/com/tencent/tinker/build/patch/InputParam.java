@@ -77,6 +77,11 @@ public class InputParam {
      */
     public final String                  sevenZipPath;
 
+    /**
+     * android build tools
+     */
+    public final String                  zipAlignPath;
+
     private InputParam(
         String oldApk,
         String newApk,
@@ -103,7 +108,8 @@ public class InputParam {
         boolean useApplyResource,
         HashMap<String, String> configFields,
 
-        String sevenZipPath
+        String sevenZipPath,
+        String zipAlignPath
     ) {
         this.oldApk = oldApk;
         this.newApk = newApk;
@@ -132,6 +138,7 @@ public class InputParam {
         this.configFields = configFields;
 
         this.sevenZipPath = sevenZipPath;
+        this.zipAlignPath = zipAlignPath;
     }
 
     public static class Builder {
@@ -187,6 +194,11 @@ public class InputParam {
          * tinkerPatch.sevenZip
          */
         private String                  sevenZipPath;
+
+        /**
+         * android build tools path
+         */
+        private String                  zipAlignPath;
 
 
         public Builder() {
@@ -302,6 +314,11 @@ public class InputParam {
             return this;
         }
 
+        public Builder setZipAlignPath(String zipAlignPath) {
+            this.zipAlignPath = zipAlignPath;
+            return this;
+        }
+
         public Builder setUseSign(boolean useSign) {
             this.useSign = useSign;
             return this;
@@ -331,7 +348,8 @@ public class InputParam {
                     largeModSize,
                     useApplyResource,
                     configFields,
-                    sevenZipPath
+                    sevenZipPath,
+                    zipAlignPath
             );
         }
     }

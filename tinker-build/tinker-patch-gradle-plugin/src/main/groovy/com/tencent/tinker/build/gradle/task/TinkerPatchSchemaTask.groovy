@@ -49,6 +49,7 @@ public class TinkerPatchSchemaTask extends DefaultTask {
         configuration.res.checkParameter()
         configuration.dex.checkDexMode()
         configuration.sevenZip.resolveZipFinalPath()
+        configuration.zipAlign.resolveAlignFinalPath()
 
         InputParam.Builder builder = new InputParam.Builder()
         if (configuration.useSign) {
@@ -80,6 +81,7 @@ public class TinkerPatchSchemaTask extends DefaultTask {
                .setUseApplyResource(configuration.buildConfig.usingResourceMapping)
                .setConfigFields(new HashMap<String, String>(configuration.packageConfig.getFields()))
                .setSevenZipPath(configuration.sevenZip.path)
+               .setZipAlignPath(configuration.zipAlign.path)
                .setUseSign(configuration.useSign)
 
         InputParam inputParam = builder.create()

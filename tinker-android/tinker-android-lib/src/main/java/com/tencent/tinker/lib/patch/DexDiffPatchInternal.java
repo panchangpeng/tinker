@@ -165,7 +165,7 @@ public class DexDiffPatchInternal extends BasePatchInternal {
     private static boolean patchDexExtractViaDexDiff(Context context, String patchVersionDirectory, String meta, final File patchFile, int mode) {
         String dir = patchVersionDirectory + "/" + DEX_PATH + "/";
 
-        if (!extractDexDiffInternals(context, dir, meta, patchFile, TYPE_DEX)) {
+        if (!extractDexDiffInternals(context, dir, meta, patchFile, TYPE_DEX, mode)) {
             TinkerLog.w(TAG, "patch recover, extractDiffInternals fail");
             return false;
         }
@@ -187,8 +187,8 @@ public class DexDiffPatchInternal extends BasePatchInternal {
 
     }
 
-    private static boolean checkClassNDexFiles(final String dexFilePath) {
-       if (patchList.isEmpty() || !isVmArt) {
+    private static boolean checkClassNDexFiles(final String dexFilePath, int patchMode) {
+        if (patchList.isEmpty() || (!isVmArt && patchMode != ShareConstants.PATCH_MODE_DIFF)) {
             return false;
         }
         ShareDexDiffPatchInfo testInfo = null;
@@ -237,9 +237,9 @@ public class DexDiffPatchInternal extends BasePatchInternal {
         return result;
     }
 
-    private static boolean mergeClassNDexFiles(final Context context, final File patchFile, final String dexFilePath) {
+    private static boolean mergeClassNDexFiles(final Context context, final File patchFile, final String dexFilePath, int patchMode) {
         // only merge for art vm
-        if (patchList.isEmpty() || !isVmArt) {
+        if (patchList.isEmpty() || (!isVmArt && patchMode != ShareConstants.PATCH_MODE_DIFF)) {
             return true;
         }
 
@@ -392,7 +392,7 @@ public class DexDiffPatchInternal extends BasePatchInternal {
         return true;
     }
 
-    private static boolean extractDexDiffInternals(Context context, String dir, String meta, File patchFile, int type) {
+    private static boolean extractDexDiffInternals(Context context, String dir, String meta, File patchFile, int type, int patchMode) {
         //parse
         patchList.clear();
         ShareDexDiffPatchInfo.parseDexDiffPatchInfo(meta, patchList);
@@ -421,7 +421,7 @@ public class DexDiffPatchInternal extends BasePatchInternal {
             String apkPath = applicationInfo.sourceDir;
             apk = new ZipFile(apkPath);
             patch = new ZipFile(patchFile);
-            if (checkClassNDexFiles(dir)) {
+            if (checkClassNDexFiles(dir, patchMode) && patchMode != ShareConstants.PATCH_MODE_DIFF) {
                 TinkerLog.w(TAG, "class n dex file %s is already exist, and md5 match, just continue", ShareConstants.CLASS_N_APK_NAME);
                 return true;
             }
@@ -439,13 +439,14 @@ public class DexDiffPatchInternal extends BasePatchInternal {
                 String dexDiffMd5 = info.dexDiffMd5;
                 String oldDexCrc = info.oldDexCrC;
 
-                if (!isVmArt && info.destMd5InDvm.equals("0")) {
+                if (!isVmArt && info.destMd5InDvm.equals("0") && patchMode != ShareConstants.PATCH_MODE_DIFF) {
                     TinkerLog.w(TAG, "patch dex %s is only for art, just continue", patchRealPath);
                     continue;
                 }
+
                 String extractedFileMd5 = isVmArt ? info.destMd5InArt : info.destMd5InDvm;
 
-                if (!SharePatchFileUtil.checkIfMd5Valid(extractedFileMd5)) {
+                if (!SharePatchFileUtil.checkIfMd5Valid(extractedFileMd5) && patchMode != ShareConstants.PATCH_MODE_DIFF) {
                     TinkerLog.w(TAG, "meta file md5 invalid, type:%s, name: %s, md5: %s", ShareTinkerInternals.getTypeString(type), info.rawName, extractedFileMd5);
                     manager.getPatchReporter().onPatchPackageCheckFail(patchFile, BasePatchInternal.getMetaCorruptedCode(type));
                     return false;
@@ -478,14 +479,14 @@ public class DexDiffPatchInternal extends BasePatchInternal {
                     }
 
                     //it is a new file, but maybe we need to repack the dex file
-                    if (!extractDexFile(patch, patchFileEntry, extractedFile, info)) {
+                    if (!extractDexFile(patch, patchFileEntry, extractedFile, info, patchMode)) {
                         TinkerLog.w(TAG, "Failed to extract raw patch file " + extractedFile.getPath());
                         manager.getPatchReporter().onPatchTypeExtractFail(patchFile, extractedFile, info.rawName, type);
                         return false;
                     }
                 } else if (dexDiffMd5.equals("0")) {
                     // skip process old dex for real dalvik vm
-                    if (!isVmArt) {
+                    if (!isVmArt && patchMode != ShareConstants.PATCH_MODE_DIFF) {
                         continue;
                     }
 
@@ -505,9 +506,9 @@ public class DexDiffPatchInternal extends BasePatchInternal {
 
                     // Small patched dex generating strategy was disabled, we copy full original dex directly now.
                     //patchDexFile(apk, patch, rawApkFileEntry, null, info, smallPatchInfoFile, extractedFile);
-                    extractDexFile(apk, rawApkFileEntry, extractedFile, info);
+                    extractDexFile(apk, rawApkFileEntry, extractedFile, info, patchMode);
 
-                    if (!SharePatchFileUtil.verifyDexFileMd5(extractedFile, extractedFileMd5)) {
+                    if (!SharePatchFileUtil.verifyDexFileMd5(extractedFile, extractedFileMd5) && patchMode != ShareConstants.PATCH_MODE_DIFF) {
                         TinkerLog.w(TAG, "Failed to recover dex file when verify patched dex: " + extractedFile.getPath());
                         manager.getPatchReporter().onPatchTypeExtractFail(patchFile, extractedFile, info.rawName, type);
                         SharePatchFileUtil.safeDeleteFile(extractedFile);
@@ -541,7 +542,7 @@ public class DexDiffPatchInternal extends BasePatchInternal {
 
                     patchDexFile(apk, patch, rawApkFileEntry, patchFileEntry, info, extractedFile);
 
-                    if (!SharePatchFileUtil.verifyDexFileMd5(extractedFile, extractedFileMd5)) {
+                    if (!SharePatchFileUtil.verifyDexFileMd5(extractedFile, extractedFileMd5)  && patchMode != ShareConstants.PATCH_MODE_DIFF) {
                         TinkerLog.w(TAG, "Failed to recover dex file when verify patched dex: " + extractedFile.getPath());
                         manager.getPatchReporter().onPatchTypeExtractFail(patchFile, extractedFile, info.rawName, type);
                         SharePatchFileUtil.safeDeleteFile(extractedFile);
@@ -552,7 +553,7 @@ public class DexDiffPatchInternal extends BasePatchInternal {
                         extractedFile.getPath(), extractedFile.length(), (System.currentTimeMillis() - start));
                 }
             }
-            if (!mergeClassNDexFiles(context, patchFile, dir)) {
+            if (!mergeClassNDexFiles(context, patchFile, dir, patchMode)) {
                 return false;
             }
         } catch (Throwable e) {
@@ -626,8 +627,8 @@ public class DexDiffPatchInternal extends BasePatchInternal {
 //        }
 //    }
 
-    private static boolean extractDexFile(ZipFile zipFile, ZipEntry entryFile, File extractTo, ShareDexDiffPatchInfo dexInfo) throws IOException {
-        final String fileMd5 = isVmArt ? dexInfo.destMd5InArt : dexInfo.destMd5InDvm;
+    private static boolean extractDexFile(ZipFile zipFile, ZipEntry entryFile, File extractTo, ShareDexDiffPatchInfo dexInfo, int patchMode) throws IOException {
+        final String fileMd5 = (isVmArt || patchMode == ShareConstants.PATCH_MODE_DIFF) ? dexInfo.destMd5InArt : dexInfo.destMd5InDvm;
         final String rawName = dexInfo.rawName;
         final boolean isJarMode = dexInfo.isJarMode;
         //it is raw dex and we use jar mode, so we need to zip it!

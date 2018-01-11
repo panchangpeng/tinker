@@ -113,10 +113,6 @@ public class ManifestDecoder extends BaseDecoder {
                 return false;
             }
 
-            // use apk patch mode when activitys
-            Logger.d("\n now use apk patch mode for gen patch.");
-            config.mApkPatchMode = true;
-            metaWriter.writeLineToInfoFile("mode=1");
 
             // check whether there is any new Android Component and get their names.
             // so far only Activity increment can pass checking.
@@ -131,6 +127,15 @@ public class ManifestDecoder extends BaseDecoder {
             if (!config.mSupportApkPatch && !config.mSupportHotplugComponent && hasIncComponent) {
                 announceWarningOrException("manifest was changed, while hot plug component support mode is disabled. "
                         + "Such changes will not take effect.");
+            }
+
+            if (isManifestChanged && hasIncComponent) {
+                // use apk patch mode when activitys
+                Logger.d("\n now use apk patch mode for gen patch.");
+                config.mApkPatchMode = true;
+                metaWriter.writeLineToInfoFile("mode=1");
+            } else {
+                Logger.d("\n now use normal patch mode for gen patch.");
             }
 
             // generate increment manifest.
@@ -201,6 +206,7 @@ public class ManifestDecoder extends BaseDecoder {
                        + " Make sure if such changes were all you expected.\n");
             }
 
+
         } catch (ParseException e) {
             e.printStackTrace();
             throw new TinkerPatchException("Parse android manifest error!");
@@ -211,7 +217,6 @@ public class ManifestDecoder extends BaseDecoder {
             e.printStackTrace();
             throw new TinkerPatchException("Failed to generate increment manifest.", e);
         }
-
         return false;
     }
 

@@ -15,27 +15,37 @@
  */
 
 package com.tencent.tinker.build.gradle.extension
+
+import org.gradle.api.Project
+
 /**
  * The configuration properties.
  *
- * @author zhangshaowen
+ * @author cpan
  */
 
-public class TinkerLibExtension {
-    /**
-     * the library file patterns, which files will be deal to gen patch
-     * such as [lib/armeabi/*.so, assets/libs/*.so]
-     */
-    Iterable<String> pattern;
+public class TinkerZipAlignExtension {
+
+    String path
 
 
-    public TinkerLibExtension() {
-        pattern = []
+    public TinkerZipAlignExtension() {
+        path = null
+    }
+
+    void resolveAlignFinalPath() {
+        if (path != null)
+            return
+
+        if (path == null) {
+            this.path = "zipalign"
+        }
+
     }
 
     @Override
     public String toString() {
-        """| pattern = ${pattern}
+        """| path = ${path}
         """.stripMargin()
     }
 }

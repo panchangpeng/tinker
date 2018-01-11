@@ -66,6 +66,7 @@ public class Configuration {
     protected static final String ATTR_SUPPORT_HOTPLUG_COMPONENT = "supportHotplugComponent";
     protected static final String ATTR_USE_SIGN                  = "useSign";
     protected static final String ATTR_SEVEN_ZIP_PATH            = "sevenZipPath";
+    protected static final String ATTR_ZIP_ALIGN_PATH            = "zipAlignPath";
     protected static final String ATTR_DEX_MODE                  = "dexMode";
     protected static final String ATTR_PATTERN                   = "pattern";
     protected static final String ATTR_IGNORE_CHANGE             = "ignoreChange";
@@ -124,6 +125,11 @@ public class Configuration {
      * sevenZip path config
      */
     public String                  mSevenZipPath;
+
+    /**
+     * android sdk build tools path
+     */
+    public String                  mZipAlignPath;
     /**
      * sign data
      */
@@ -236,6 +242,7 @@ public class Configuration {
         mSupportApkPatch         = param.supportApkPatch;
 
         mSevenZipPath = param.sevenZipPath;
+        mZipAlignPath = param.zipAlignPath;
         mPackageFields = param.configFields;
 
         mUseSignAPk = param.useSign;
@@ -258,6 +265,7 @@ public class Configuration {
         sb.append("isIgnoreWarning:" + mIgnoreWarning + "\n");
         sb.append("isProtectedApp:" + mIsProtectedApp + "\n");
         sb.append("7-ZipPath:" + mSevenZipPath + "\n");
+        sb.append("ZipAlignPath:" + mZipAlignPath + "\n");
         sb.append("useSignAPk:" + mUseSignAPk + "\n");
 
         sb.append("package meta fields: \n");
@@ -452,6 +460,13 @@ public class Configuration {
                             mSevenZipPath = value;
                         } else {
                             mSevenZipPath = "7za";
+                        }
+                    } else if (tagName.equals(ATTR_ZIP_ALIGN_PATH)) {
+                        File zipAlignFile = new File(value);
+                        if (zipAlignFile.exists()) {
+                            mZipAlignPath = value;
+                        } else {
+                            mZipAlignPath = "zipalign";
                         }
                     } else {
                         System.err.println("unknown property tag " + tagName);

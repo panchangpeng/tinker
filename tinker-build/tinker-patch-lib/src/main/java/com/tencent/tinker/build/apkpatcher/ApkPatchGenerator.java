@@ -1,5 +1,6 @@
 package com.tencent.tinker.build.apkpatcher;
 
+import com.tencent.tinker.android.dex.Dex;
 import com.tencent.tinker.build.info.InfoWriter;
 import com.tencent.tinker.build.patch.Configuration;
 import com.tencent.tinker.build.util.FileOperation;
@@ -16,6 +17,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.LineNumberReader;
 import java.io.OutputStream;
 import java.security.Key;
 import java.security.KeyStore;
@@ -35,14 +38,18 @@ public class ApkPatchGenerator {
     private Configuration configuration;
     private File unSignedApk;
     private File signedApk;
+    private File zipalignApk;
 
     private final InfoWriter metaWriter;
 
     public ApkPatchGenerator(Configuration config) throws IOException {
         configuration = config;
 
-        unSignedApk = new File(config.mTempUnzipMergeDir, config.mNewApkFile.getName() + "_unsigned.apk");
-        signedApk = new File(config.mTempUnzipMergeDir, config.mNewApkFile.getName() + "_signed.apk");
+        String fileName = config.mNewApkFile.getName().substring(0, config.mNewApkFile.getName().lastIndexOf("."));
+
+        unSignedApk = new File(config.mTempUnzipMergeDir, fileName + "_unsigned.apk");
+        signedApk = new File(config.mTempUnzipMergeDir, fileName + "_signed.apk");
+        zipalignApk = new File(config.mTempUnzipMergeDir, fileName + "_signed_align.apk");
 
         String prePath = TypedValue.FILE_ASSETS + File.separator;
         String metaPath = prePath + TypedValue.PATCH_META_FILE;
@@ -69,8 +76,12 @@ public class ApkPatchGenerator {
 
         copyOldIgnoreRes(configuration.mTempUnzipOldDir);
 
+        //only for weixin
+        regenMultixDexMate();
+
         unsignApk();
         signApk(unSignedApk, signedApk);
+        zipalignApk(signedApk, zipalignApk);
         if (metaWriter != null) {
             ArrayList<String> lines = new ArrayList<>();
             lines.add("mode=1");
@@ -83,6 +94,9 @@ public class ApkPatchGenerator {
 
         copyMetaInfoFromMergeApk();
         copyAndroidManifest(configuration.mTempUnzipMergeDir.getAbsolutePath() + File.separator + TypedValue.RES_MANIFEST, configuration.mTempResultDir.getAbsolutePath() + File.separator + TypedValue.RES_MANIFEST);
+        String clazzMerge = configuration.mTempUnzipMergeDir.getAbsolutePath() + File.separator + TypedValue.FILE_ASSETS + File.separator + "secondary-program-dex-jars" + File.separator + "metadata.txt";
+        String clazzMetaDest = configuration.mTempResultDir.getAbsolutePath() + File.separator + TypedValue.FILE_ASSETS + File.separator + "secondary-program-dex-jars" + File.separator + "metadata.txt";
+        copyClazzMetaInfoFromMerge(clazzMerge, clazzMetaDest);
         Logger.d("executeAndSave finish.");
 
     }
@@ -107,6 +121,16 @@ public class ApkPatchGenerator {
         FileOperation.copyFileUsingStream(srcFile, destFile);
     }
 
+    private void copyClazzMetaInfoFromMerge(String scr, String dest) throws IOException {
+        File srcFile = new File(scr);
+        File destFile = new File(dest);
+        if (srcFile.exists()) {
+            FileOperation.copyFileUsingStream(srcFile, destFile);
+        } else {
+            Logger.d("copyClazzMetaInfoFromMerge failed.");
+        }
+    }
+
     private void removeMetaInfo() {
         File mateInfoDir = new File(configuration.mTempUnzipMergeDir.getAbsolutePath() + File.separator + "META-INF");
         Logger.d("mate path %s", mateInfoDir.getAbsolutePath());
@@ -123,7 +147,10 @@ public class ApkPatchGenerator {
     private void copyDexes() throws IOException {
         Logger.d("copyDexes");
         File tempFullPatchDexPath = new File(configuration.mOutFolder + File.separator + TypedValue.DEX_TEMP_PATCH_DIR);
+
+
         File[] dexFiles = tempFullPatchDexPath.listFiles();
+
         if (dexFiles != null && dexFiles.length > 0) {
             for (File f : dexFiles) {
                 //File srcFile = new File(tempFullPatchDexPath, f.getAbsolutePath());
@@ -131,10 +158,46 @@ public class ApkPatchGenerator {
                 File descFile = new File(configuration.mTempUnzipMergeDir, f.getName());
                 FileOperation.copyFileUsingStream(f, descFile);
                 Logger.d("copyDexes from:%s to:%s", f.getPath(), descFile);
+
             }
+
         } else {
             Logger.d("Empty dex");
         }
+    }
+
+    // this is only for wexin tinker diff
+    private void regenMultixDexMate() throws IOException {
+        Logger.d("regenMultixDexMate");
+        InfoWriter writer = new InfoWriter(configuration, configuration.mTempUnzipMergeDir.getAbsolutePath() + File.separator + TypedValue.FILE_ASSETS + File.separator + "secondary-program-dex-jars" + File.separator + "metadata.txt");
+        File[] dexFiles = configuration.mTempUnzipMergeDir.listFiles();
+
+        if (dexFiles != null && dexFiles.length > 0) {
+            for (File f : dexFiles) {
+                if (f.getName().endsWith(".dex")) {
+                    try {
+                        Dex dexIn = new Dex(f);
+                        String dexName = f.getName();
+                        String dexMd5 = MD5.getMD5(f);
+                        String tempClazzName = dexIn.typeNames().get(dexIn.classDefs().iterator().next().typeIndex);
+                        String clazzName = tempClazzName.replaceAll("/", ".").substring(1).replaceAll(";", "");
+                        Logger.d("dexName:" + dexName);
+                        Logger.d("tempClazzName:" + tempClazzName);
+                        Logger.d("clazzName:" + clazzName);
+                        Logger.d("dex md5:" + dexMd5);
+                        writer.writeLineToInfoFile(dexName + " " + dexMd5 + " " + clazzName);
+                    } catch (Exception e) {
+                        Logger.e("Get classes.dex md5 failed.");
+                    }
+                }
+            }
+
+        } else {
+            Logger.d("Empty dex");
+        }
+
+        writer.close();
+
     }
 
     private void copyOldIgnoreRes(File inputFile) throws IOException {
@@ -199,6 +262,62 @@ public class ApkPatchGenerator {
         process.destroy();
         if (!output.exists()) {
             throw new IOException("Can't Generate signed APK. Please check if your sign info is correct.");
+        }
+    }
+
+    private void zipalignApk(File input, File output) throws Exception {
+        //sign apk
+        Logger.d("zipalign apk: %s", input.getName());
+
+        if (output.exists()) {
+            output.delete();
+        }
+        String cmd = configuration.mZipAlignPath;
+        Logger.d("zipalign path:" + cmd);
+        if (cmd == null || cmd.length() < -0) {
+            cmd = "zipalign";
+        }
+
+//        ArrayList<String> command = new ArrayList<>();
+//        command.add(cmd);
+//        command.add("-f");
+//        command.add("-v");
+//        command.add("4");
+//        command.add(input.getAbsolutePath());
+//        command.add(output.getAbsolutePath());
+//
+//        Process process = new ProcessBuilder(command).start();
+//        process.waitFor();
+//        process.destroy();
+//        if (!output.exists()) {
+//            throw new IOException("Can't zipalign APK. Please check if your sign info is correct.");
+//        }
+
+        ProcessBuilder pb = new ProcessBuilder(cmd, "-f", "-v", "4", input.getAbsolutePath(), output.getAbsolutePath());
+        pb.redirectErrorStream(true);
+        Process pro = null;
+
+        LineNumberReader reader = null;
+        try {
+            pro = pb.start();
+            reader = new LineNumberReader(new InputStreamReader(pro.getInputStream()));
+            while (reader.readLine() != null) {
+            }
+        } catch (IOException e) {
+            FileOperation.deleteFile(output);
+            Logger.e("zip align file failed, you should set the zip align, or set the path directly");
+        } finally {
+            try {
+                pro.waitFor();
+            } catch (Throwable ignored) {
+                // Ignored.
+            }
+            try {
+                pro.destroy();
+            } catch (Throwable ignored) {
+                // Ignored.
+            }
+            StreamUtil.closeQuietly(reader);
         }
     }
 

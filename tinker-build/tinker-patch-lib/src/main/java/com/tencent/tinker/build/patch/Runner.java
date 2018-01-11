@@ -66,7 +66,7 @@ public class Runner {
             decoder.patch(config.mOldApkFile, config.mNewApkFile);
             decoder.onAllPatchesEnd();
 
-            //gen new apk and sign and copy apk mate info add cy cpan
+            //gen new apk and sign and copy apk mate info add by cpan
             if (config.mApkPatchMode) {
                 ApkPatchGenerator apkPatchGenerator = new ApkPatchGenerator(config);
                 apkPatchGenerator.executeAndSave();
