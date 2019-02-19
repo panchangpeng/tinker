@@ -9,7 +9,7 @@ import android.util.Log;
  * Created by cpan on 2017/12/11.
  */
 
-public class SecondActivity extends Activity {
+public class SecondActivity2 extends Activity {
     private static final String TAG = "SecondActivity";
 
     @Override
@@ -24,9 +24,6 @@ public class SecondActivity extends Activity {
 
 //        Log.i(TAG, "sdfsdfs");
 //        Log.i(TAG, "sdfsdfs");
-        Log.i(TAG, "sdfsdfs");
-        Log.i(TAG, "sdfsdfs");
-        Log.i(TAG, "sdfsdfs");
 
     }
 }

@@ -134,6 +134,7 @@ public class ManifestDecoder extends BaseDecoder {
                 Logger.d("\n now use apk patch mode for gen patch.");
                 config.mApkPatchMode = true;
                 metaWriter.writeLineToInfoFile("mode=1");
+
             } else {
                 Logger.d("\n now use normal patch mode for gen patch.");
             }
@@ -230,9 +231,9 @@ public class ManifestDecoder extends BaseDecoder {
         final Set<String> incNames = new HashSet<>(newServices);
         incNames.removeAll(oldServices);
         if (!incNames.isEmpty()) {
-            announceWarningOrException("found added services: " + incNames.toString()
-                    + "\n currently tinker does not support increase new services, "
-                    + "such these changes would not take effect.");
+//            announceWarningOrException("found added services: " + incNames.toString()
+//                    + "\n currently tinker does not support increase new services, "
+//                    + "such these changes would not take effect.");
         }
         return incNames;
     }
@@ -241,9 +242,9 @@ public class ManifestDecoder extends BaseDecoder {
         final Set<String> incNames = new HashSet<>(newReceivers);
         incNames.removeAll(oldReceivers);
         if (!incNames.isEmpty()) {
-            announceWarningOrException("found added receivers: " + incNames.toString()
-                    + "\n currently tinker does not support increase new receivers, "
-                    + "such these changes would not take effect.");
+//            announceWarningOrException("found added receivers: " + incNames.toString()
+//                    + "\n currently tinker does not support increase new receivers, "
+//                    + "such these changes would not take effect.");
         }
         return incNames;
     }
@@ -252,9 +253,9 @@ public class ManifestDecoder extends BaseDecoder {
         final Set<String> incNames = new HashSet<>(newProviders);
         incNames.removeAll(oldProviders);
         if (!incNames.isEmpty()) {
-            announceWarningOrException("found added providers: " + incNames.toString()
-                    + "\n currently tinker does not support increase new providers, "
-                    + "such these changes would not take effect.");
+//            announceWarningOrException("found added providers: " + incNames.toString()
+//                    + "\n currently tinker does not support increase new providers, "
+//                    + "such these changes would not take effect.");
         }
         return incNames;
     }

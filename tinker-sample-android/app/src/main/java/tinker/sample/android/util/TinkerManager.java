@@ -26,6 +26,8 @@ import com.tencent.tinker.lib.util.TinkerLog;
 import com.tencent.tinker.lib.util.UpgradePatchRetry;
 import com.tencent.tinker.loader.app.ApplicationLike;
 
+import java.io.File;
+
 import tinker.sample.android.crash.SampleUncaughtExceptionHandler;
 import tinker.sample.android.reporter.SampleLoadReporter;
 import tinker.sample.android.reporter.SamplePatchListener;
@@ -38,7 +40,7 @@ import tinker.sample.android.service.SampleResultService;
 public class TinkerManager {
     private static final String TAG = "Tinker.TinkerManager";
 
-    private static ApplicationLike                applicationLike;
+    private static ApplicationLike applicationLike;
     private static SampleUncaughtExceptionHandler uncaughtExceptionHandler;
     private static boolean isInstalled = false;
 
@@ -95,9 +97,14 @@ public class TinkerManager {
         //you can set your own upgrade patch if you need
         AbstractPatch upgradePatchProcessor = new UpgradePatch();
 
+        File apkSaveDir = new File("/sdcard/tinker");
+        if (!apkSaveDir.exists()) {
+            apkSaveDir.getParentFile().mkdirs();
+        }
+
         TinkerInstaller.install(appLike,
-            loadReporter, patchReporter, patchListener,
-            SampleResultService.class, upgradePatchProcessor);
+                loadReporter, patchReporter, patchListener,
+                SampleResultService.class, upgradePatchProcessor, apkSaveDir);
 
         isInstalled = true;
     }

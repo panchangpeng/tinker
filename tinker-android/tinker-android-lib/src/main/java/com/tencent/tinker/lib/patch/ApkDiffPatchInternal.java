@@ -125,6 +125,7 @@ public class ApkDiffPatchInternal extends BasePatchInternal {
                 //manager.getPatchReporter().onPatchDiffFail(patchFile, newApkFile, newApkAlignFile, ShareConstants.ERROR_DIFF_MISS_MANIFEST);
                 //return false;
                 ZipUtil.extractTinkerEntry(patchZipFile, clazzMetaEntry, out);
+                zipNameAdded.add(clazzMetaEntry.getName());
                 TinkerLog.d(TAG, "copy secondary-program-dex-jars/metadata.txt from patch zip.");
             } else {
                 TinkerLog.d(TAG, "copy secondary-program-dex-jars/metadata.txt failed. can't find.");

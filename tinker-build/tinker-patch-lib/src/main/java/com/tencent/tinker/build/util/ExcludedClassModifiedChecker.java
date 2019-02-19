@@ -126,8 +126,8 @@ public final class ExcludedClassModifiedChecker {
                                     if (changedClassInfosMap.isEmpty()) {
                                         stmCode = STMCODE_END;
                                     } else {
-//                                        stmCode = STMCODE_END;
-                                        stmCode = STMCODE_ERROR_LOADER_CLASS_CHANGED;
+                                        stmCode = STMCODE_END;
+//                                        stmCode = STMCODE_ERROR_LOADER_CLASS_CHANGED;
                                     }
                                 } else {
                                     stmCode = STMCODE_ERROR_LOADER_CLASS_IN_PRIMARY_DEX_MISMATCH;
