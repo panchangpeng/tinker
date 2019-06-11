@@ -24,6 +24,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.SystemClock;
+import android.support.annotation.Nullable;
 
 import com.tencent.tinker.lib.patch.AbstractPatch;
 import com.tencent.tinker.lib.tinker.Tinker;
@@ -34,6 +35,7 @@ import com.tencent.tinker.loader.shareutil.ShareIntentUtil;
 import com.tencent.tinker.loader.shareutil.ShareSecurityCheck;
 
 import java.io.File;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Created by zhangshaowen on 16/3/14.
@@ -41,28 +43,26 @@ import java.io.File;
 public class TinkerPatchService extends IntentService {
     private static final String TAG = "Tinker.TinkerPatchService";
 
-    private static final String        PATCH_PATH_EXTRA      = "patch_path_extra";
-    private static final String        RESULT_CLASS_EXTRA    = "patch_result_class";
+    private static final String PATCH_PATH_EXTRA = "patch_path_extra";
+    private static final String RESULT_CLASS_EXTRA = "patch_result_class";
 
-    private static       AbstractPatch upgradePatchProcessor = null;
-    private static       int                                    notificationId       = ShareConstants.TINKER_PATCH_SERVICE_NOTIFICATION;
-    private static       Class<? extends AbstractResultService> resultServiceClass   = null;
+    private static AbstractPatch upgradePatchProcessor = null;
+    private static int notificationId = ShareConstants.TINKER_PATCH_SERVICE_NOTIFICATION;
+    private static Class<? extends AbstractResultService> resultServiceClass = null;
 
-    /**
-     * Creates an IntentService.  Invoked by your subclass's constructor.
-     */
     public TinkerPatchService() {
-        super(TinkerPatchService.class.getSimpleName());
+        super("TinkerPatchService");
     }
 
-    public static void runPatchService(Context context, String path) {
+    public static void runPatchService(final Context context, final String path) {
+        TinkerLog.i(TAG, "run patch service...");
+        Intent intent = new Intent(context, TinkerPatchService.class);
+        intent.putExtra(PATCH_PATH_EXTRA, path);
+        intent.putExtra(RESULT_CLASS_EXTRA, resultServiceClass.getName());
         try {
-            Intent intent = new Intent(context, TinkerPatchService.class);
-            intent.putExtra(PATCH_PATH_EXTRA, path);
-            intent.putExtra(RESULT_CLASS_EXTRA, resultServiceClass.getName());
             context.startService(intent);
-        } catch (Throwable throwable) {
-            TinkerLog.e(TAG, "start patch service fail, exception:" + throwable);
+        } catch (Throwable thr) {
+            TinkerLog.e(TAG, "run patch service fail, exception:" + thr);
         }
     }
 
@@ -73,7 +73,7 @@ public class TinkerPatchService extends IntentService {
         try {
             Class.forName(serviceClass.getName());
         } catch (ClassNotFoundException e) {
-//            e.printStackTrace();
+            TinkerLog.printErrStackTrace(TAG, e, "patch processor class not found.");
         }
     }
 
@@ -91,6 +91,12 @@ public class TinkerPatchService extends IntentService {
         return ShareIntentUtil.getStringExtra(intent, RESULT_CLASS_EXTRA);
     }
 
+    @Override
+    protected void onHandleIntent(@Nullable Intent intent) {
+        increasingPriority();
+        doApplyPatch(this, intent);
+    }
+
     /**
      * set the tinker notification id you want
      * @param id
@@ -99,9 +105,16 @@ public class TinkerPatchService extends IntentService {
         notificationId = id;
     }
 
-    @Override
-    protected void onHandleIntent(Intent intent) {
-        final Context context = getApplicationContext();
+    private static AtomicBoolean sIsPatchApplying = new AtomicBoolean(false);
+
+    private static void doApplyPatch(Context context, Intent intent) {
+        // Since we may retry with IntentService, we should prevent
+        // racing here again.
+        if (!sIsPatchApplying.compareAndSet(false, true)) {
+            TinkerLog.w(TAG, "TinkerPatchService doApplyPatch is running by another runner.");
+            return;
+        }
+
         Tinker tinker = Tinker.with(context);
         tinker.getPatchReporter().onPatchServiceStart(intent);
 
@@ -121,7 +134,6 @@ public class TinkerPatchService extends IntentService {
         long cost;
         Throwable e = null;
 
-        increasingPriority();
         PatchResult patchResult = new PatchResult();
         try {
             if (upgradePatchProcessor == null) {
@@ -135,8 +147,8 @@ public class TinkerPatchService extends IntentService {
         }
 
         cost = SystemClock.elapsedRealtime() - begin;
-        tinker.getPatchReporter().
-            onPatchResult(patchFile, result, cost);
+        tinker.getPatchReporter()
+                .onPatchResult(patchFile, result, cost);
 
         ShareSecurityCheck checker = new ShareSecurityCheck(context);
         checker.verifyPatchMetaSignature(patchFile);
@@ -162,13 +174,22 @@ public class TinkerPatchService extends IntentService {
 
         AbstractResultService.runResultService(context, patchResult, getPatchResultExtra(intent));
 
+        sIsPatchApplying.set(false);
     }
 
     private void increasingPriority() {
-//        if (Build.VERSION.SDK_INT > 24) {
-//            TinkerLog.i(TAG, "for Android 7.1, we just ignore increasingPriority job");
-//            return;
-//        }
+        if (Build.VERSION.SDK_INT >= 26) {
+            TinkerLog.i(TAG, "for system version >= Android O, we just ignore increasingPriority "
+                    + "job to avoid crash or toasts.");
+            return;
+        }
+
+        if ("ZUK".equals(Build.MANUFACTURER)) {
+            TinkerLog.i(TAG, "for ZUK device, we just ignore increasingPriority "
+                    + "job to avoid crash.");
+            return;
+        }
+
         TinkerLog.i(TAG, "try to increase patch process priority");
         try {
             Notification notification = new Notification();
@@ -187,7 +208,6 @@ public class TinkerPatchService extends IntentService {
     /**
      * I don't want to do this, believe me
      */
-    //InnerService
     public static class InnerService extends Service {
         @Override
         public void onCreate() {
@@ -197,7 +217,6 @@ public class TinkerPatchService extends IntentService {
             } catch (Throwable e) {
                 TinkerLog.e(TAG, "InnerService set service for push exception:%s.", e);
             }
-            // kill
             stopSelf();
         }
 
@@ -212,6 +231,5 @@ public class TinkerPatchService extends IntentService {
             return null;
         }
     }
-
 }
 

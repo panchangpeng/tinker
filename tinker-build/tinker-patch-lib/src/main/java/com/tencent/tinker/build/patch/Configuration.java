@@ -62,6 +62,8 @@ public class Configuration {
     protected static final String ATTR_NAME  = "name";
 
     protected static final String ATTR_IGNORE_WARNING            = "ignoreWarning";
+    protected static final String ATTR_ALLOW_LOADER_IN_ANY_DEX   = "allowLoaderInAnyDex";
+    protected static final String ATTR_REMOVE_LOADER_FOR_ALL_DEX = "removeLoaderForAllDex";
     protected static final String ATTR_IS_PROTECTED_APP          = "isProtectedApp";
     protected static final String ATTR_SUPPORT_HOTPLUG_COMPONENT = "supportHotplugComponent";
     protected static final String ATTR_USE_SIGN                  = "useSign";
@@ -70,6 +72,7 @@ public class Configuration {
     protected static final String ATTR_DEX_MODE                  = "dexMode";
     protected static final String ATTR_PATTERN                   = "pattern";
     protected static final String ATTR_IGNORE_CHANGE             = "ignoreChange";
+    protected static final String ATTR_IGNORE_CHANGE_WARNING     = "ignoreChangeWarning";
     protected static final String ATTR_RES_LARGE_MOD             = "largeModSize";
 
     protected static final String ATTR_LOADER       = "loader";
@@ -90,7 +93,9 @@ public class Configuration {
     public File    mOldApkFile;
     public File    mNewApkFile;
     public boolean mIgnoreWarning;
+    public boolean mAllowLoaderInAnyDex;
     public boolean mIsProtectedApp;
+    public boolean mRemoveLoaderForAllDex;
     public boolean mSupportHotplugComponent;
     public boolean mSupportApkPatch;
     /**
@@ -110,6 +115,7 @@ public class Configuration {
      */
     public HashSet<Pattern> mResFilePattern;
     public HashSet<Pattern> mResIgnoreChangePattern;
+    public HashSet<Pattern> mResIgnoreChangeWarningPattern;
     public HashSet<String>  mResRawPattern;
     public int              mLargeModSize;
     /**
@@ -166,6 +172,7 @@ public class Configuration {
         mResFilePattern = new HashSet<>();
         mResRawPattern = new HashSet<>();
         mResIgnoreChangePattern = new HashSet<>();
+        mResIgnoreChangeWarningPattern = new HashSet<>();
 
         mPackageFields = new HashMap<>();
         mOutFolder = outputFile.getAbsolutePath();
@@ -196,6 +203,7 @@ public class Configuration {
         mResFilePattern = new HashSet<>();
         mResRawPattern = new HashSet<>();
         mResIgnoreChangePattern = new HashSet<>();
+        mResIgnoreChangeWarningPattern = new HashSet<>();
 
         mPackageFields = new HashMap<>();
 
@@ -214,6 +222,10 @@ public class Configuration {
 
         for (String item : param.resourceIgnoreChangePattern) {
             addToPatterns(item, mResIgnoreChangePattern);
+        }
+
+        for (String item : param.resourceIgnoreChangeWarningPattern) {
+            addToPatterns(item, mResIgnoreChangeWarningPattern);
         }
         mLargeModSize = param.largeModSize;
         //only gradle have the param
@@ -235,6 +247,10 @@ public class Configuration {
         mOutFolder = param.outFolder;
 
         mIgnoreWarning = param.ignoreWarning;
+
+        mAllowLoaderInAnyDex = param.allowLoaderInAnyDex;
+
+        mRemoveLoaderForAllDex= param.removeLoaderForAllDex;
 
         mIsProtectedApp = param.isProtectedApp;
 
@@ -263,6 +279,8 @@ public class Configuration {
         sb.append("newApk:" + mNewApkPath + "\n");
         sb.append("outputFolder:" + mOutFolder + "\n");
         sb.append("isIgnoreWarning:" + mIgnoreWarning + "\n");
+        sb.append("isAllowLoaderClassInAnyDex:" + mAllowLoaderInAnyDex + "\n");
+        sb.append("isRemoveLoaderForAllDex:" + mRemoveLoaderForAllDex + "\n");
         sb.append("isProtectedApp:" + mIsProtectedApp + "\n");
         sb.append("7-ZipPath:" + mSevenZipPath + "\n");
         sb.append("ZipAlignPath:" + mZipAlignPath + "\n");
@@ -301,6 +319,9 @@ public class Configuration {
         }
         for (Pattern name : mResIgnoreChangePattern) {
             sb.append("resIgnore change:" + name.toString() + "\n");
+        }
+        for (Pattern name : mResIgnoreChangeWarningPattern) {
+            sb.append("resIgnore change warning:" + name.toString() + "\n");
         }
         sb.append("largeModSize:" + mLargeModSize + "kb\n");
         sb.append("useApplyResource:" + mUseApplyResource + "\n");
@@ -446,6 +467,10 @@ public class Configuration {
                     }
                     if (tagName.equals(ATTR_IGNORE_WARNING)) {
                         mIgnoreWarning = value.equals("true");
+                    } else if (tagName.equals(ATTR_ALLOW_LOADER_IN_ANY_DEX)) {
+                        mAllowLoaderInAnyDex = value.equals("true");
+                    } else if (tagName.equals(ATTR_REMOVE_LOADER_FOR_ALL_DEX)) {
+                        mRemoveLoaderForAllDex = value.equals("true");
                     } else if (tagName.equals(ATTR_IS_PROTECTED_APP)) {
                         mIsProtectedApp = value.equals("true");
                     } else if (tagName.equals(ATTR_SUPPORT_HOTPLUG_COMPONENT)) {
@@ -583,7 +608,13 @@ public class Configuration {
                         mResRawPattern.add(value);
                         addToPatterns(value, mResFilePattern);
                     } else if (tagName.equals(ATTR_IGNORE_CHANGE)) {
-                        addToPatterns(value, mResIgnoreChangePattern);
+                        if (!Utils.isBlank(value)) {
+                            addToPatterns(value, mResIgnoreChangePattern);
+                        }
+                    } else if (tagName.equals(ATTR_IGNORE_CHANGE_WARNING)) {
+                        if (!Utils.isBlank(value)) {
+                            addToPatterns(value, mResIgnoreChangeWarningPattern);
+                        }
                     } else if (tagName.equals(ATTR_RES_LARGE_MOD)) {
                         mLargeModSize = Integer.valueOf(value);
                     } else {

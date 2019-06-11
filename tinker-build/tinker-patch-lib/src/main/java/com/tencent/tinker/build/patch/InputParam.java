@@ -35,6 +35,8 @@ public class InputParam {
     public final String  storealias;
     public final String  storepass;
     public final boolean ignoreWarning;
+    public final boolean allowLoaderInAnyDex;
+    public final boolean removeLoaderForAllDex;
     public final boolean isProtectedApp;
     public final boolean supportHotplugComponent;
     public final boolean supportApkPatch;
@@ -61,6 +63,10 @@ public class InputParam {
      */
     public final ArrayList<String>       resourceIgnoreChangePattern;
     /**
+     * tinkerPatch.resource ignoreChangeWarning
+     */
+    public final ArrayList<String>       resourceIgnoreChangeWarningPattern;
+    /**
      * tinkerPath.resource largeModSize
      */
     public final int                     largeModSize;
@@ -83,33 +89,36 @@ public class InputParam {
     public final String                  zipAlignPath;
 
     private InputParam(
-        String oldApk,
-        String newApk,
-        String outFolder,
-        File signFile,
-        String keypass,
-        String storealias,
-        String storepass,
-        boolean ignoreWarning,
-        boolean isProtectedApp,
-        boolean supportHotplugComponent,
-        boolean supportApkPatch,
-        boolean useSign,
+            String oldApk,
+            String newApk,
+            String outFolder,
+            File signFile,
+            String keypass,
+            String storealias,
+            String storepass,
+            boolean ignoreWarning,
+            boolean allowLoaderInAnyDex,
+            boolean removeLoaderForAllDex,
+            boolean isProtectedApp,
+            boolean supportHotplugComponent,
+            boolean supportApkPatch,
+            boolean useSign,
 
-        ArrayList<String> dexFilePattern,
-        ArrayList<String> dexLoaderPattern,
-        ArrayList<String> dexIgnoreChangeLoaderPattern,
+            ArrayList<String> dexFilePattern,
+            ArrayList<String> dexLoaderPattern,
+            ArrayList<String> dexIgnoreChangeLoaderPattern,
 
-        String dexMode,
-        ArrayList<String> soFilePattern,
-        ArrayList<String> resourceFilePattern,
-        ArrayList<String> resourceIgnoreChangePattern,
-        int largeModSize,
-        boolean useApplyResource,
-        HashMap<String, String> configFields,
+            String dexMode,
+            ArrayList<String> soFilePattern,
+            ArrayList<String> resourceFilePattern,
+            ArrayList<String> resourceIgnoreChangePattern,
+            ArrayList<String> resourceIgnoreChangeWarningPattern,
+            int largeModSize,
+            boolean useApplyResource,
+            HashMap<String, String> configFields,
 
-        String sevenZipPath,
-        String zipAlignPath
+            String sevenZipPath,
+            String zipAlignPath
     ) {
         this.oldApk = oldApk;
         this.newApk = newApk;
@@ -119,6 +128,8 @@ public class InputParam {
         this.storealias = storealias;
         this.storepass = storepass;
         this.ignoreWarning = ignoreWarning;
+        this.allowLoaderInAnyDex = allowLoaderInAnyDex;
+        this.removeLoaderForAllDex = removeLoaderForAllDex;
         this.isProtectedApp = isProtectedApp;
         this.supportHotplugComponent = supportHotplugComponent;
         this.supportApkPatch = supportApkPatch;
@@ -132,6 +143,7 @@ public class InputParam {
         this.soFilePattern = soFilePattern;
         this.resourceFilePattern = resourceFilePattern;
         this.resourceIgnoreChangePattern = resourceIgnoreChangePattern;
+        this.resourceIgnoreChangeWarningPattern = resourceIgnoreChangeWarningPattern;
         this.largeModSize = largeModSize;
         this.useApplyResource = useApplyResource;
 
@@ -153,6 +165,8 @@ public class InputParam {
         private String  storealias;
         private String  storepass;
         private boolean ignoreWarning;
+        private boolean allowLoaderInAnyDex;
+        private boolean removeLoaderForAllDex;
         private boolean isProtectedApp;
         private boolean isComponentHotplugSupported;
         private boolean isApkPatchSupported;
@@ -178,6 +192,10 @@ public class InputParam {
          * tinkerPath.resource ignoreChange
          */
         private ArrayList<String>       resourceIgnoreChangePattern;
+        /**
+         * tinkerPatch.resource ignoreChangeWarning
+         */
+        private ArrayList<String>       resourceIgnoreChangeWarningPattern;
         /**
          * tinkerPath.resource largeModSize
          */
@@ -229,6 +247,11 @@ public class InputParam {
             return this;
         }
 
+        public Builder setResourceIgnoreChangeWarningPattern(ArrayList<String> resourceIgnoreChangeWarningPattern) {
+            this.resourceIgnoreChangeWarningPattern = resourceIgnoreChangeWarningPattern;
+            return this;
+        }
+
         public Builder setResourceLargeModSize(int largeModSize) {
             this.largeModSize = largeModSize;
             return this;
@@ -271,6 +294,16 @@ public class InputParam {
 
         public Builder setIgnoreWarning(boolean ignoreWarning) {
             this.ignoreWarning = ignoreWarning;
+            return this;
+        }
+
+        public Builder setAllowLoaderInAnyDex(boolean allowLoaderInAnyDex) {
+            this.allowLoaderInAnyDex = allowLoaderInAnyDex;
+            return this;
+        }
+
+        public Builder setRemoveLoaderForAllDex(boolean removeLoaderForAllDex){
+            this.removeLoaderForAllDex = removeLoaderForAllDex;
             return this;
         }
 
@@ -334,6 +367,8 @@ public class InputParam {
                     storealias,
                     storepass,
                     ignoreWarning,
+                    allowLoaderInAnyDex,
+                    removeLoaderForAllDex,
                     isProtectedApp,
                     isComponentHotplugSupported,
                     isApkPatchSupported,
@@ -345,6 +380,7 @@ public class InputParam {
                     soFilePattern,
                     resourceFilePattern,
                     resourceIgnoreChangePattern,
+                    resourceIgnoreChangeWarningPattern,
                     largeModSize,
                     useApplyResource,
                     configFields,

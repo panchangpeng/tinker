@@ -17,6 +17,7 @@
 package com.tencent.tinker.lib.listener;
 
 import android.content.Context;
+import android.text.TextUtils;
 
 import com.tencent.tinker.lib.service.TinkerPatchService;
 import com.tencent.tinker.lib.tinker.Tinker;
@@ -25,6 +26,7 @@ import com.tencent.tinker.lib.util.TinkerServiceInternals;
 import com.tencent.tinker.lib.util.UpgradePatchRetry;
 import com.tencent.tinker.loader.shareutil.ShareConstants;
 import com.tencent.tinker.loader.shareutil.SharePatchFileUtil;
+import com.tencent.tinker.loader.shareutil.SharePatchInfo;
 import com.tencent.tinker.loader.shareutil.ShareTinkerInternals;
 
 import java.io.File;
@@ -48,10 +50,9 @@ public class DefaultPatchListener implements PatchListener {
      */
     @Override
     public int onPatchReceived(String path) {
-        File patchFile = new File(path);
-
-        int returnCode = patchCheck(path, SharePatchFileUtil.getMD5(patchFile));
-
+        final File patchFile = new File(path);
+        final String patchMD5 = SharePatchFileUtil.getMD5(patchFile);
+        final int returnCode = patchCheck(path, patchMD5);
         if (returnCode == ShareConstants.ERROR_PATCH_OK) {
             TinkerPatchService.runPatchService(context, path);
         } else {
@@ -61,13 +62,15 @@ public class DefaultPatchListener implements PatchListener {
     }
 
     protected int patchCheck(String path, String patchMd5) {
-        Tinker manager = Tinker.with(context);
+        final Tinker manager = Tinker.with(context);
         //check SharePreferences also
         if (!manager.isTinkerEnabled() || !ShareTinkerInternals.isTinkerEnableWithSharedPreferences(context)) {
             return ShareConstants.ERROR_PATCH_DISABLE;
         }
-        File file = new File(path);
-
+        if (TextUtils.isEmpty(patchMd5)) {
+            return ShareConstants.ERROR_PATCH_NOTEXIST;
+        }
+        final File file = new File(path);
         if (!SharePatchFileUtil.isLegalFile(file)) {
             return ShareConstants.ERROR_PATCH_NOTEXIST;
         }
@@ -95,6 +98,21 @@ public class DefaultPatchListener implements PatchListener {
                     return ShareConstants.ERROR_PATCH_ALREADY_APPLY;
                 }
             }
+        }
+
+        // Hit if we have already applied patch but main process did not restart.
+        final String patchDirectory = manager.getPatchDirectory().getAbsolutePath();
+        File patchInfoLockFile = SharePatchFileUtil.getPatchInfoLockFile(patchDirectory);
+        File patchInfoFile = SharePatchFileUtil.getPatchInfoFile(patchDirectory);
+        try {
+            final SharePatchInfo currInfo = SharePatchInfo.readAndCheckPropertyWithLock(patchInfoFile, patchInfoLockFile);
+            if (currInfo != null && !ShareTinkerInternals.isNullOrNil(currInfo.newVersion) && !currInfo.isRemoveNewVersion) {
+                if (patchMd5.equals(currInfo.newVersion)) {
+                    return ShareConstants.ERROR_PATCH_ALREADY_APPLY;
+                }
+            }
+        } catch (Throwable ignored) {
+            // Ignored.
         }
 
         if (!UpgradePatchRetry.getInstance(context).onPatchListenerCheck(patchMd5)) {

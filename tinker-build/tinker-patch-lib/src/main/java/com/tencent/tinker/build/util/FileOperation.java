@@ -39,18 +39,6 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 public class FileOperation {
-    public static final boolean fileExists(String filePath) {
-        if (filePath == null) {
-            return false;
-        }
-
-        File file = new File(filePath);
-        if (file.exists()) {
-            return true;
-        }
-        return false;
-    }
-
     public static final boolean deleteFile(String filePath) {
         if (filePath == null) {
             return true;
@@ -187,6 +175,9 @@ public class FileOperation {
         try {
             while (enumeration.hasMoreElements()) {
                 ZipEntry entry = (ZipEntry) enumeration.nextElement();
+                if (!validateZipEntryName(new File(filePath), entry.getName())) {
+                    throw new IOException("Bad ZipEntry name: " + entry.getName());
+                }
                 if (entry.isDirectory()) {
                     new File(filePath, entry.getName()).mkdirs();
                     continue;
@@ -261,15 +252,15 @@ public class FileOperation {
                 rootpath = rootpath.replace("\\", "/");
             }
             ZipEntry entry = new ZipEntry(rootpath);
-//            if (compressMethod == ZipEntry.DEFLATED) {
+            // if (compressMethod == ZipEntry.DEFLATED) {
             entry.setMethod(ZipEntry.DEFLATED);
-//            } else {
-//                entry.setMethod(ZipEntry.STORED);
-//                entry.setSize(fileContents.length);
-//                final CRC32 checksumCalculator = new CRC32();
-//                checksumCalculator.update(fileContents);
-//                entry.setCrc(checksumCalculator.getValue());
-//            }
+            // } else {
+            //     entry.setMethod(ZipEntry.STORED);
+            //     entry.setSize(fileContents.length);
+            //     final CRC32 checksumCalculator = new CRC32();
+            //     checksumCalculator.update(fileContents);
+            //     entry.setCrc(checksumCalculator.getValue());
+            // }
             zipout.putNextEntry(entry);
             zipout.write(fileContents);
             zipout.flush();
@@ -384,7 +375,6 @@ public class FileOperation {
             while (reader.readLine() != null) {
             }
         } catch (IOException e) {
-//            e.printStackTrace();
             FileOperation.deleteFile(outputFile);
             Logger.e("7a patch file failed, you should set the zipArtifact, or set the path directly");
             return false;
@@ -403,5 +393,18 @@ public class FileOperation {
             StreamUtil.closeQuietly(reader);
         }
         return true;
+    }
+
+    private static boolean validateZipEntryName(File destDir, String entryName) {
+        if (entryName == null || entryName.isEmpty()) {
+            return false;
+        }
+        try {
+            final String canonicalDestinationDir = destDir.getCanonicalPath();
+            final File destEntryFile = destDir.toPath().resolve(entryName).toFile();
+            return destEntryFile.getCanonicalPath().startsWith(canonicalDestinationDir + File.separator);
+        } catch (Throwable ignored) {
+            return false;
+        }
     }
 }

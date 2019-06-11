@@ -169,6 +169,29 @@ public class SharePatchFileUtil {
     }
 
     /**
+     * For some special device whose dex2oat procedure is optimized for tinker. (e.g. vivo, oppo)
+     *
+     * Because these devices by-pass our dex2oat request, which cause vm to load tinker's dex with interpret-mode
+     * and generate nothing instead of a valid oat file. It's fine to skip the check so far.
+     *
+     * @param file
+     * @return
+     */
+    public static final boolean shouldAcceptEvenIfIllegal(File file) {
+        final boolean isSpecialManufacturer =
+                "vivo".equalsIgnoreCase(Build.MANUFACTURER)
+             || "oppo".equalsIgnoreCase(Build.MANUFACTURER);
+
+        final boolean isSpecialOSVer =
+                (Build.VERSION.SDK_INT >= 29)
+             || (Build.VERSION.SDK_INT >= 28 && Build.VERSION.PREVIEW_SDK_INT != 0);
+
+        final boolean isFileIllegal = !file.exists() || file.length() == 0;
+
+        return (isSpecialManufacturer || isSpecialOSVer) && isFileIllegal;
+    }
+
+    /**
      * get directory size
      *
      * @param directory
@@ -276,7 +299,7 @@ public class SharePatchFileUtil {
             return false;
         }
         //if it is not the raw dex, we check the stream instead
-        String fileMd5;
+        String fileMd5 = "";
 
         if (isRawDexFile(file.getName())) {
             fileMd5 = getMD5(file);
@@ -299,7 +322,6 @@ public class SharePatchFileUtil {
                 } finally {
                     closeQuietly(is);
                 }
-                fileMd5 = getMD5(dexJar.getInputStream(classesDex));
             } catch (Throwable e) {
                 Log.e(TAG, "Bad dex jar file: " + file.getAbsolutePath(), e);
                 return false;

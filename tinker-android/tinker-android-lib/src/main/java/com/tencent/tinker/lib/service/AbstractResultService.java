@@ -32,12 +32,8 @@ public abstract class AbstractResultService extends IntentService {
 
     private static final String RESULT_EXTRA = "result_extra";
 
-
-    /**
-     * Creates an IntentService.  Invoked by your subclass's constructor.
-     */
     public AbstractResultService() {
-        super(AbstractResultService.class.getSimpleName());
+        super("TinkerResultService");
     }
 
     public static void runResultService(Context context, PatchResult result, String resultServiceClass) {
@@ -48,7 +44,6 @@ public abstract class AbstractResultService extends IntentService {
             Intent intent = new Intent();
             intent.setClassName(context, resultServiceClass);
             intent.putExtra(RESULT_EXTRA, result);
-
             context.startService(intent);
         } catch (Throwable throwable) {
             TinkerLog.e(TAG, "run result service fail, exception:" + throwable);

@@ -35,6 +35,9 @@ public class ShareConstants {
     public static final String TINKER_ID     = "TINKER_ID";
     public static final String NEW_TINKER_ID = "NEW_TINKER_ID";
 
+    // Please keep it synchronized with the one defined in TypedValue.
+    public static final String PKGMETA_KEY_IS_PROTECTED_APP = "is_protected_app";
+
     public static final String OLD_VERSION     = "old";
     public static final String NEW_VERSION     = "new";
     public static final String APK_VERSION     = "apk";
@@ -58,16 +61,16 @@ public class ShareConstants {
     public static final String PATCH_META_FILE             = "assets/patch_meta.txt";
     public static final String PATCH_MODE                  = "mode";
 
-    public static final Pattern CLASS_N_PATTERN = Pattern.compile("classes(?:[2-9]{0,1}|[1-9][0-9]+)\\.dex(\\.jar)?");
-
-
     public static final String DEX_SUFFIX  = ".dex";
     public static final String JAR_SUFFIX  = ".jar";
+    public static final String APK_SUFFIX  = ".apk";
     public static final String ODEX_SUFFIX = ".odex";
 
     public static final String TEST_DEX_NAME            = "test.dex";
     public static final String CHANGED_CLASSES_DEX_NAME = "changed_classes.dex";
     public static final String CLASS_N_APK_NAME         = "tinker_classN.apk";
+
+    public static final Pattern CLASS_N_PATTERN = Pattern.compile("classes(?:[2-9]?|[1-9][0-9]+)\\.dex(\\.jar)?");
 
     public static final String CHECK_DEX_INSTALL_FAIL = "checkDexInstall failed";
     public static final String CHECK_RES_INSTALL_FAIL = "checkResInstall failed";
@@ -75,7 +78,7 @@ public class ShareConstants {
     public static final String CHECK_DEX_OAT_EXIST_FAIL  = "checkDexOptExist failed";
     public static final String CHECK_DEX_OAT_FORMAT_FAIL = "checkDexOptFormat failed";
 
-//    public static final String CHECK_VM_PROPERTY_FAIL = "checkVmArtProperty failed";
+    // public static final String CHECK_VM_PROPERTY_FAIL = "checkVmArtProperty failed";
 
 
     public static final String RES_META_FILE       = "assets/res_meta.txt";
@@ -112,14 +115,14 @@ public class ShareConstants {
      * multi process share
      */
     public static final String TINKER_SHARE_PREFERENCE_CONFIG = "tinker_share_config";
-    public static final String TINKER_ENABLE_CONFIG           = "tinker_enable_";
+    public static final String TINKER_ENABLE_CONFIG_PREFIX    = "tinker_enable_";
 
     /**
      * only for each process
      */
-    public static final String TINKER_OWN_PREFERENCE_CONFIG = "tinker_own_config_";
-    public static final String TINKER_SAFE_MODE_COUNT       = "safe_mode_count";
-    public static final int    TINKER_SAFE_MODE_MAX_COUNT   = 3;
+    public static final String TINKER_OWN_PREFERENCE_CONFIG_PREFIX = "tinker_own_config_";
+    public static final String TINKER_SAFE_MODE_COUNT_PREFIX       = "safe_mode_count_";
+    public static final int    TINKER_SAFE_MODE_MAX_COUNT          = 3;
 
 
     /**

@@ -108,7 +108,7 @@ public class ShareTinkerInternals {
                 newName = "classes.dex";
             }
             return new ShareDexDiffPatchInfo(newName, rawDexInfo.path, rawDexInfo.destMd5InDvm, rawDexInfo.destMd5InArt,
-                rawDexInfo.dexDiffMd5, rawDexInfo.oldDexCrC, rawDexInfo.newDexCrC, rawDexInfo.dexMode);
+                rawDexInfo.dexDiffMd5, rawDexInfo.oldDexCrC, rawDexInfo.newOrPatchedDexCrC, rawDexInfo.dexMode);
         }
 
         return null;
@@ -296,7 +296,8 @@ public class ShareTinkerInternals {
      */
     public static void setTinkerDisableWithSharedPreferences(Context context) {
         SharedPreferences sp = context.getSharedPreferences(ShareConstants.TINKER_SHARE_PREFERENCE_CONFIG, Context.MODE_MULTI_PROCESS);
-        sp.edit().putBoolean(getTinkerSharedPreferencesName(), false).commit();
+        String keyName = getTinkerSwitchSPKey(context);
+        sp.edit().putBoolean(keyName, false).commit();
     }
 
     /**
@@ -310,11 +311,33 @@ public class ShareTinkerInternals {
             return false;
         }
         SharedPreferences sp = context.getSharedPreferences(ShareConstants.TINKER_SHARE_PREFERENCE_CONFIG, Context.MODE_MULTI_PROCESS);
-        return sp.getBoolean(getTinkerSharedPreferencesName(), true);
+        String keyName = getTinkerSwitchSPKey(context);
+        return sp.getBoolean(keyName, true);
     }
 
-    private static String getTinkerSharedPreferencesName() {
-        return ShareConstants.TINKER_ENABLE_CONFIG + ShareConstants.TINKER_VERSION;
+    private static String getTinkerSwitchSPKey(Context context) {
+        String tmpTinkerId = getManifestTinkerID(context);
+        if (isNullOrNil(tmpTinkerId)) {
+            tmpTinkerId = "@@";
+        }
+        return ShareConstants.TINKER_ENABLE_CONFIG_PREFIX + ShareConstants.TINKER_VERSION + "_" + tmpTinkerId;
+    }
+
+    public static int getSafeModeCount(Context context) {
+        String processName = ShareTinkerInternals.getProcessName(context);
+        String preferName = ShareConstants.TINKER_OWN_PREFERENCE_CONFIG_PREFIX + processName;
+        SharedPreferences sp = context.getSharedPreferences(preferName, Context.MODE_PRIVATE);
+        int count = sp.getInt(ShareConstants.TINKER_SAFE_MODE_COUNT_PREFIX + ShareConstants.TINKER_VERSION, 0);
+        Log.w(TAG, "getSafeModeCount: preferName:" + preferName + " count:" + count);
+        return count;
+    }
+
+    public static void setSafeModeCount(Context context, int count) {
+        String processName = ShareTinkerInternals.getProcessName(context);
+        String preferName = ShareConstants.TINKER_OWN_PREFERENCE_CONFIG_PREFIX + processName;
+        SharedPreferences sp = context.getSharedPreferences(preferName, Context.MODE_PRIVATE);
+        sp.edit().putInt(ShareConstants.TINKER_SAFE_MODE_COUNT_PREFIX + ShareConstants.TINKER_VERSION, count).commit();
+        Log.w(TAG, "setSafeModeCount: preferName:" + preferName + " count:" + count);
     }
 
     public static boolean isTinkerEnabled(int flag) {
@@ -384,6 +407,27 @@ public class ShareTinkerInternals {
 
     }
 
+    public static void killProcessExceptMain(Context context) {
+        final ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        if (am == null) {
+            return;
+        }
+        List<ActivityManager.RunningAppProcessInfo> appProcessList = am.getRunningAppProcesses();
+        if (appProcessList != null) {
+            // NOTE: getRunningAppProcess() ONLY GIVE YOU THE PROCESS OF YOUR OWN PACKAGE IN ANDROID M
+            // BUT THAT'S ENOUGH HERE
+            for (ActivityManager.RunningAppProcessInfo ai : appProcessList) {
+                if (ai.uid != android.os.Process.myUid()) {
+                    continue;
+                }
+                if (ai.processName.equals(context.getPackageName())) {
+                    continue;
+                }
+                android.os.Process.killProcess(ai.pid);
+            }
+        }
+    }
+
     /**
      * add process name cache
      *
@@ -412,24 +456,24 @@ public class ShareTinkerInternals {
             (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
 
         if (activityManager != null) {
-            List<ActivityManager.RunningAppProcessInfo> appProcessList = activityManager
-                .getRunningAppProcesses();
+            try {
+                List<ActivityManager.RunningAppProcessInfo> appProcessList = activityManager
+                    .getRunningAppProcesses();
 
-            if (appProcessList != null) {
-                try {
+                if (appProcessList != null) {
                     for (ActivityManager.RunningAppProcessInfo process : appProcessList) {
                         if (process.pid == myPid) {
                             myProcess = process;
                             break;
                         }
                     }
-                } catch (Exception e) {
-                    Log.e(TAG, "getProcessNameInternal exception:" + e.getMessage());
-                }
 
-                if (myProcess != null) {
-                    return myProcess.processName;
+                    if (myProcess != null) {
+                        return myProcess.processName;
+                    }
                 }
+            } catch (Exception e) {
+                Log.e(TAG, "getProcessNameInternal exception:" + e.getMessage());
             }
         }
 
@@ -456,6 +500,7 @@ public class ShareTinkerInternals {
                     in.close();
                 }
             } catch (Exception e) {
+                // Ignored.
             }
         }
 

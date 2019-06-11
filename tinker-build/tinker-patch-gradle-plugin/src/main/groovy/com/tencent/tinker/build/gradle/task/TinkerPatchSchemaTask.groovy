@@ -15,6 +15,8 @@
  */
 
 package com.tencent.tinker.build.gradle.task
+
+import com.tencent.tinker.build.gradle.extension.TinkerPatchExtension
 import com.tencent.tinker.build.patch.InputParam
 import com.tencent.tinker.build.patch.Runner
 import org.gradle.api.DefaultTask
@@ -26,7 +28,7 @@ import org.gradle.api.tasks.TaskAction
  * @author zhangshaowen
  */
 public class TinkerPatchSchemaTask extends DefaultTask {
-    def configuration
+    TinkerPatchExtension configuration
     def android
     String buildApkPath
     String outputFolder
@@ -67,6 +69,8 @@ public class TinkerPatchSchemaTask extends DefaultTask {
                .setNewApk(buildApkPath)
                .setOutBuilder(outputFolder)
                .setIgnoreWarning(configuration.ignoreWarning)
+               .setAllowLoaderInAnyDex(configuration.allowLoaderInAnyDex)
+               .setRemoveLoaderForAllDex(configuration.removeLoaderForAllDex)
                .setDexFilePattern(new ArrayList<String>(configuration.dex.pattern))
                .setIsProtectedApp(configuration.buildConfig.isProtectedApp)
                .setIsComponentHotplugSupported(configuration.buildConfig.supportHotplugComponent)
@@ -77,6 +81,7 @@ public class TinkerPatchSchemaTask extends DefaultTask {
                .setSoFilePattern(new ArrayList<String>(configuration.lib.pattern))
                .setResourceFilePattern(new ArrayList<String>(configuration.res.pattern))
                .setResourceIgnoreChangePattern(new ArrayList<String>(configuration.res.ignoreChange))
+               .setResourceIgnoreChangeWarningPattern(new ArrayList<String>(configuration.res.ignoreChangeWarning))
                .setResourceLargeModSize(configuration.res.largeModSize)
                .setUseApplyResource(configuration.buildConfig.usingResourceMapping)
                .setConfigFields(new HashMap<String, String>(configuration.packageConfig.getFields()))

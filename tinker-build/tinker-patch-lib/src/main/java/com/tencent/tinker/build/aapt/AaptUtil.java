@@ -51,7 +51,7 @@ public final class AaptUtil {
 
     private static final XPathExpression ANDROID_ID_USAGE = createExpression("//@*[starts-with(., '@') and " + "not(starts-with(., '@+')) and " + "not(starts-with(., '@android:')) and " + "not(starts-with(., '@null'))]");
 
-    private static final XPathExpression ANDROID_ID_DEFINITION = createExpression("//@*[starts-with(., '@+') and " + "not(starts-with(., '@+android:id'))]");
+    private static final XPathExpression ANDROID_ID_DEFINITION = createExpression("//@*[starts-with(., '@+') and " + "not(starts-with(., '@+android:id')) and " + "not(starts-with(., '@+id/android:'))]");
 
     private static final Map<String, RType> RESOURCE_TYPES = getResourceTypes();
     private static final List<String>       IGNORED_TAGS   = Arrays.asList("eat-comment", "skip");
@@ -243,6 +243,8 @@ public final class AaptUtil {
                 case ATTR://no sub item
                     resourceValue = nodeToString(node, true);
                     break;
+                default:
+                    break;
             }
             try {
                 addToResourceCollector(resourceCollector, new ResourceDirectory(directoryName, valuesFullFilename), node, rType, resourceValue);
@@ -277,14 +279,19 @@ public final class AaptUtil {
             if (name.startsWith("android:")) {
                 continue;
             }
+
+            if (rawRType.startsWith("tools:")) {
+                continue;
+            }
+
             if (!RESOURCE_TYPES.containsKey(rawRType)) {
                 throw new AaptUtilException("Invalid reference '" + resourceName + "' in '" + xmlFullFilename + "'");
             }
             RType rType = RESOURCE_TYPES.get(rawRType);
 
-//if(!resourceCollector.isContainResource(rType, IdType.INT, sanitizeName(resourceCollector, name))){
-//throw new AaptUtilException("Not found reference '" + resourceName + "' in '" + xmlFullFilename + "'");
-//}
+            // if (!resourceCollector.isContainResource(rType, IdType.INT, sanitizeName(resourceCollector, name))) {
+            //     throw new AaptUtilException("Not found reference '" + resourceName + "' in '" + xmlFullFilename + "'");
+            // }
             references.add(new FakeRDotTxtEntry(IdType.INT, rType, sanitizeName(rType, resourceCollector, name)));
         }
     }

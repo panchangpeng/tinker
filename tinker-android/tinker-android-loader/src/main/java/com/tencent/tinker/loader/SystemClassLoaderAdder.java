@@ -40,6 +40,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.zip.ZipFile;
 
+import dalvik.system.BaseDexClassLoader;
 import dalvik.system.DexFile;
 import dalvik.system.PathClassLoader;
 
@@ -53,14 +54,14 @@ public class SystemClassLoaderAdder {
     private static int sPatchDexCount = 0;
 
     @SuppressLint("NewApi")
-    public static void installDexes(Application application, PathClassLoader loader, File dexOptDir, List<File> files)
+    public static void installDexes(Application application, BaseDexClassLoader loader, File dexOptDir, List<File> files, boolean isProtectedApp)
         throws Throwable {
         Log.i(TAG, "installDexes dexOptDir: " + dexOptDir.getAbsolutePath() + ", dex size:" + files.size());
 
         if (!files.isEmpty()) {
             files = createSortedAdditionalPathEntries(files);
             ClassLoader classLoader = loader;
-            if (Build.VERSION.SDK_INT >= 24 && !checkIsProtectedApp(files)) {
+            if (Build.VERSION.SDK_INT >= 24 && !isProtectedApp) {
                 classLoader = AndroidNClassLoader.inject(loader, application);
             }
             //because in dalvik, if inner class is not the same classloader with it wrapper class.
@@ -101,6 +102,7 @@ public class SystemClassLoaderAdder {
             try {
                 ShareReflectUtil.reduceFieldArray(classLoader, "mDexs", sPatchDexCount);
             } catch (Exception e) {
+                // Ignored.
             }
         }
     }
@@ -111,20 +113,6 @@ public class SystemClassLoaderAdder {
         boolean isPatch = (boolean) filed.get(null);
         Log.w(TAG, "checkDexInstall result:" + isPatch);
         return isPatch;
-    }
-
-    private static boolean checkIsProtectedApp(List<File> files) {
-        if (!files.isEmpty()) {
-            for (File file : files) {
-                if (file == null) {
-                    continue;
-                }
-                if (file.getName().startsWith(ShareConstants.CHANGED_CLASSES_DEX_NAME)) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     private static List<File> createSortedAdditionalPathEntries(List<File> additionalPathEntries) {
@@ -379,7 +367,7 @@ public class SystemClassLoaderAdder {
             try {
                 ShareReflectUtil.expandFieldArray(loader, "mDexs", extraDexs);
             } catch (Exception e) {
-
+                // Ignored.
             }
         }
     }

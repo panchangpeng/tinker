@@ -18,13 +18,13 @@ package com.tencent.tinker.lib.tinker;
 
 import android.content.Context;
 
+import com.tencent.tinker.entry.ApplicationLike;
 import com.tencent.tinker.lib.listener.PatchListener;
 import com.tencent.tinker.lib.patch.AbstractPatch;
 import com.tencent.tinker.lib.reporter.LoadReporter;
 import com.tencent.tinker.lib.reporter.PatchReporter;
 import com.tencent.tinker.lib.service.AbstractResultService;
 import com.tencent.tinker.lib.util.TinkerLog;
-import com.tencent.tinker.loader.app.ApplicationLike;
 
 import java.io.File;
 

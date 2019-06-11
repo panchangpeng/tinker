@@ -113,9 +113,9 @@ public class ApkDecoder extends BaseDecoder {
 
         Files.walkFileTree(mNewApkDir.toPath(), new ApkFilesVisitor(config, mNewApkDir.toPath(), mOldApkDir.toPath(), dexPatchDecoder, soPatchDecoder, resPatchDecoder));
 
-        //get all duplicate resource file
+        // get all duplicate resource file
         for (File duplicateRes : resDuplicateFiles) {
-//            resPatchDecoder.patch(duplicateRes, null);
+            // resPatchDecoder.patch(duplicateRes, null);
             Logger.e("Warning: res file %s is also match at dex or library pattern, "
                 + "we treat it as unchanged in the new resource_out.zip", getRelativePathStringToOldFile(duplicateRes));
         }
@@ -176,7 +176,6 @@ public class ApkDecoder extends BaseDecoder {
                 try {
                     dexDecoder.patch(oldFile, file.toFile());
                 } catch (Exception e) {
-//                    e.printStackTrace();
                     throw new RuntimeException(e);
                 }
                 return FileVisitResult.CONTINUE;
@@ -189,7 +188,6 @@ public class ApkDecoder extends BaseDecoder {
                 try {
                     soDecoder.patch(oldFile, file.toFile());
                 } catch (Exception e) {
-//                    e.printStackTrace();
                     throw new RuntimeException(e);
                 }
                 return FileVisitResult.CONTINUE;
@@ -198,7 +196,6 @@ public class ApkDecoder extends BaseDecoder {
                 try {
                     resDecoder.patch(oldFile, file.toFile());
                 } catch (Exception e) {
-//                    e.printStackTrace();
                     throw new RuntimeException(e);
                 }
                 return FileVisitResult.CONTINUE;

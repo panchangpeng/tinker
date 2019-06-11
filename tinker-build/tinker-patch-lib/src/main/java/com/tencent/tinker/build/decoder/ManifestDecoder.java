@@ -126,7 +126,12 @@ public class ManifestDecoder extends BaseDecoder {
 
             if (!config.mSupportApkPatch && !config.mSupportHotplugComponent && hasIncComponent) {
                 announceWarningOrException("manifest was changed, while hot plug component support mode is disabled. "
-                        + "Such changes will not take effect.");
+                        + "Such changes will not take effect, related components: \n"
+                        + " activity: " + incActivities + "\n"
+                        + " service: " + incServices + "\n"
+                        + " receiver: " + incReceivers + "\n"
+                        + " provider: " + incProviders + "\n"
+                );
             }
 
             if (isManifestChanged && hasIncComponent) {
