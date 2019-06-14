@@ -25,8 +25,6 @@
         <activity android:name=".app.SecondActivity" />
         <activity android:name=".app.SecondActivity2" />
         <activity android:name=".app.SecondActivity3" />
-        <!--
-        -->
     </application>
 
 </manifest>

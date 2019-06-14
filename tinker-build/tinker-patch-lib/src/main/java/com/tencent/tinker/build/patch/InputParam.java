@@ -39,7 +39,8 @@ public class InputParam {
     public final boolean removeLoaderForAllDex;
     public final boolean isProtectedApp;
     public final boolean supportHotplugComponent;
-    public final boolean supportApkPatch;
+    public final boolean supportTinkerDiff;
+    public final String  packingMode;
     public final boolean useSign;
 
     /**
@@ -101,7 +102,8 @@ public class InputParam {
             boolean removeLoaderForAllDex,
             boolean isProtectedApp,
             boolean supportHotplugComponent,
-            boolean supportApkPatch,
+            boolean supportTinkerDiff,
+            String  packingMode,
             boolean useSign,
 
             ArrayList<String> dexFilePattern,
@@ -132,7 +134,8 @@ public class InputParam {
         this.removeLoaderForAllDex = removeLoaderForAllDex;
         this.isProtectedApp = isProtectedApp;
         this.supportHotplugComponent = supportHotplugComponent;
-        this.supportApkPatch = supportApkPatch;
+        this.supportTinkerDiff = supportTinkerDiff;
+        this.packingMode    = packingMode;
         this.useSign = useSign;
 
         this.dexFilePattern = dexFilePattern;
@@ -169,7 +172,8 @@ public class InputParam {
         private boolean removeLoaderForAllDex;
         private boolean isProtectedApp;
         private boolean isComponentHotplugSupported;
-        private boolean isApkPatchSupported;
+        private boolean isTinkerDiffSupported;
+        private String  packingMode;
         private boolean useSign;
 
         /**
@@ -317,8 +321,13 @@ public class InputParam {
             return this;
         }
 
-        public Builder setIsApkPatchSupported(boolean isApkPatchSupported) {
-            this.isApkPatchSupported = isApkPatchSupported;
+        public Builder setIsTinkerDiffSupported(boolean isTinkerDiffSupported) {
+            this.isTinkerDiffSupported = isTinkerDiffSupported;
+            return this;
+        }
+
+        public Builder setPackingMode(String mode) {
+            this.packingMode = mode;
             return this;
         }
 
@@ -371,7 +380,8 @@ public class InputParam {
                     removeLoaderForAllDex,
                     isProtectedApp,
                     isComponentHotplugSupported,
-                    isApkPatchSupported,
+                    isTinkerDiffSupported,
+                    packingMode,
                     useSign,
                     dexFilePattern,
                     dexLoaderPattern,

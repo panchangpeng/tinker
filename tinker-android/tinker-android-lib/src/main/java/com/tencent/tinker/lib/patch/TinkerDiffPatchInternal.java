@@ -5,6 +5,7 @@ import android.content.pm.ApplicationInfo;
 
 import com.tencent.tinker.commons.util.StreamUtil;
 import com.tencent.tinker.lib.tinker.Tinker;
+import com.tencent.tinker.lib.util.AlignedZipOutputStream;
 import com.tencent.tinker.lib.util.TinkerLog;
 import com.tencent.tinker.lib.util.ZipUtil;
 import com.tencent.tinker.loader.TinkerRuntimeException;
@@ -36,15 +37,15 @@ import java.util.zip.ZipOutputStream;
  * Created by cpan on 2017/12/10.
  */
 
-public class ApkDiffPatchInternal extends BasePatchInternal {
-    private static final String TAG = "Tinker.ApkDiffPatchInternal";
+public class TinkerDiffPatchInternal extends BasePatchInternal {
+    private static final String TAG = "Tinker.TinkerDiffPatchInternal";
 
     public static boolean tryRecoverApkFiles(Tinker manager, ShareSecurityCheck checker, Context context,
                                              String diffDirectory, String patchVersionDirectory, File patchFile,
-                                             int patchMode, SharePatchInfo sharePatchInfo, File patchInfoFile, File patchInfoLockFile) {
+                                             String packingMode, SharePatchInfo sharePatchInfo, File patchInfoFile, File patchInfoLockFile) {
 
-        if (patchMode == ShareConstants.PATCH_MODE_HOT) {
-            TinkerLog.i(TAG, "It's not apk patch pack, ignore. mode:%d", patchMode);
+        if (ShareConstants.PACKING_MODE_HOTPATCH.equals(packingMode)) {
+            TinkerLog.i(TAG, "It's not apk patch pack, ignore. mode:%d", packingMode);
             return true;
         }
 
@@ -85,7 +86,8 @@ public class ApkDiffPatchInternal extends BasePatchInternal {
             newApkAlignFile.getParentFile().mkdirs();
         }
 
-        ZipOutputStream out = null;
+        AlignedZipOutputStream alignedZipOutputStream = null;
+//        ZipOutputStream out = null;
         ZipFile patchZipFile = null;
         ZipFile oldApkZipFile = null;
         ZipFile classNZipFile = null;
@@ -103,40 +105,54 @@ public class ApkDiffPatchInternal extends BasePatchInternal {
                 TinkerLog.d(TAG, "newApkFile exist.");
             }
 
-            out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(newApkFile)));
+            //out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(newApkFile)));
+            alignedZipOutputStream = new AlignedZipOutputStream(new BufferedOutputStream(new FileOutputStream(newApkFile)));
 
             patchZipFile = new ZipFile(patchFile);
 
-            // copy AndroidManifest.xml from patch.zip
+//            1. AndroidManifest
+//            2. META - INF
+//            3. *.SO patch
+//            4. *.dex patch
+//            5. resource patch
+
+            // step 1 copy AndroidManifest.xml from patch.zip
+            TinkerLog.i(TAG,"step 1 start copy AndroidManifest form patch");
             ZipEntry manifestZipEntry = patchZipFile.getEntry(ShareConstants.RES_MANIFEST);
             if (manifestZipEntry == null) {
                 TinkerLog.w(TAG, "manifest patch entry is null. path:" + ShareConstants.RES_MANIFEST);
-                manager.getPatchReporter().onPatchDiffFail(patchFile, newApkFile, newApkAlignFile, ShareConstants.ERROR_DIFF_MISS_MANIFEST);
+                manager.getPatchReporter().onPatchTKDiffFail(patchFile, newApkFile, newApkAlignFile, ShareConstants.ERROR_DIFF_MISS_MANIFEST);
                 return false;
             }
+            //ZipUtil.extractTinkerEntry(patchZipFile, manifestZipEntry, out);
+            ZipUtil.extractTinkerEntry(patchZipFile, manifestZipEntry, alignedZipOutputStream);
+            TinkerLog.i(TAG,"step 1 end copy AndroidManifest.xml form patch");
 
-            ZipUtil.extractTinkerEntry(patchZipFile, manifestZipEntry, out);
-            TinkerLog.d(TAG, "copy AndroidManifest.xml from patch zip.");
 
-            // copy secondary-program-dex-jars/metadata.txt
-            ZipEntry clazzMetaEntry = patchZipFile.getEntry(ShareConstants.RES_CLAZZ_META_FILES);
-            if (clazzMetaEntry != null) {
-                TinkerLog.w(TAG, "metadata patch entry is null. path:" + ShareConstants.RES_MANIFEST);
-                //manager.getPatchReporter().onPatchDiffFail(patchFile, newApkFile, newApkAlignFile, ShareConstants.ERROR_DIFF_MISS_MANIFEST);
-                //return false;
-                ZipUtil.extractTinkerEntry(patchZipFile, clazzMetaEntry, out);
-                zipNameAdded.add(clazzMetaEntry.getName());
-                TinkerLog.d(TAG, "copy secondary-program-dex-jars/metadata.txt from patch zip.");
-            } else {
-                TinkerLog.d(TAG, "copy secondary-program-dex-jars/metadata.txt failed. can't find.");
-            }
+//            // copy secondary-program-dex-jars/metadata.txt only wechat has this file
+//            TinkerLog.i(TAG,"step 2 start copy metadata.txt form patch");
+//            ZipEntry clazzMetaEntry = patchZipFile.getEntry(ShareConstants.RES_CLAZZ_META_FILES);
+//            if (clazzMetaEntry != null) {
+//                TinkerLog.w(TAG, "metadata patch entry is null. path:" + ShareConstants.RES_MANIFEST);
+//                //manager.getPatchReporter().onPatchTKDiffFail(patchFile, newApkFile, newApkAlignFile, ShareConstants.ERROR_DIFF_MISS_MANIFEST);
+//                //return false;
+//                ZipUtil.extractTinkerEntry(patchZipFile, clazzMetaEntry, alignedZipOutputStream);
+//                zipNameAdded.add(clazzMetaEntry.getName());
+//                TinkerLog.d(TAG, "copy secondary-program-dex-jars/metadata.txt from patch zip.");
+//            } else {
+//                TinkerLog.d(TAG, "copy secondary-program-dex-jars/metadata.txt failed. can't find.");
+//            }
+//            TinkerLog.i(TAG,"step 2 end copy metadata.txt form patch");
 
-            // copy new apk meta inf
+
+
+            // step 2. copy meta inf from patch.
+            TinkerLog.i(TAG,"step 2 start copy meta inf form patch");
             final Enumeration<? extends ZipEntry> metaInfEntries = patchZipFile.entries();
             while (metaInfEntries.hasMoreElements()) {
                 ZipEntry entry = metaInfEntries.nextElement();
                 if (entry == null) {
-                    manager.getPatchReporter().onPatchDiffFail(patchFile, newApkFile, newApkAlignFile, ShareConstants.ERROR_DIFF_MISS_MATE_INF);
+                    manager.getPatchReporter().onPatchTKDiffFail(patchFile, newApkFile, newApkAlignFile, ShareConstants.ERROR_DIFF_MISS_MATE_INF);
                     throw new TinkerRuntimeException("zipEntry is null when get from patch file.");
                 }
                 String name = entry.getName();
@@ -145,15 +161,17 @@ public class ApkDiffPatchInternal extends BasePatchInternal {
                 }
                 if (!entry.isDirectory() && name.startsWith(ShareConstants.RES_APK_META_FILES)) {
                     String newName = ShareConstants.RES_APK_META_INF + File.separator + name.substring(name.lastIndexOf("/") + 1);
-                    ZipUtil.extractTinkerEntry(patchZipFile, entry, newName, out);
+                    ZipUtil.extractTinkerEntry(patchZipFile, entry, newName, alignedZipOutputStream);
                     zipNameAdded.add(newName);
                     TinkerLog.d(TAG, "copy %s from patch zip as %s", name, newName);
                 } else {
                     TinkerLog.d(TAG, "skip copy %s from patch zip.", name);
                 }
             }
+            TinkerLog.i(TAG,"step 2 end copy meta inf  form patch");
 
             // copy *.so
+            TinkerLog.i(TAG,"step 3 start copy *.so ");
             String soDir = patchVersionDirectory + "/" + SO_PATH + "/";
             String libMeta = checker.getMetaContentMap().get(SO_META_FILE);
             ArrayList<ShareBsDiffPatchInfo> patchList = new ArrayList<>();
@@ -170,13 +188,15 @@ public class ApkDiffPatchInternal extends BasePatchInternal {
                     TinkerLog.d(TAG, "copy %s from %s", info.name, soFilePath);
                     inputStream = new FileInputStream(soFile);
                     ZipEntry z = new ZipEntry(soName);
-                    ZipUtil.extractTinkerEntry(z, inputStream, out);
+                    ZipUtil.extractTinkerEntry(z, inputStream, alignedZipOutputStream);
                     zipNameAdded.add(soName);
                 } else {
                     TinkerLog.w(TAG, "skip copy %s. file not exist. ", soFilePath);
                 }
             }
+            TinkerLog.i(TAG,"step 3 end copy *.so ");
 
+            TinkerLog.i(TAG,"step 4 start copy class.dex ");
             // copy class.dex
             String dexDir = patchVersionDirectory + "/" + DEX_PATH + "/";
             String dexMeta = checker.getMetaContentMap().get(DEX_META_FILE);
@@ -206,14 +226,16 @@ public class ApkDiffPatchInternal extends BasePatchInternal {
                     }
                     if (!zipEntry.isDirectory() && !name.equalsIgnoreCase(ShareConstants.TEST_DEX_NAME)) {
                         TinkerLog.d(TAG, "copy %s from %s", name, ShareConstants.CLASS_N_APK_NAME);
-                        ZipUtil.extractTinkerEntry(classNZipFile, zipEntry, out);
+                        ZipUtil.extractTinkerEntry(classNZipFile, zipEntry, alignedZipOutputStream);
                         zipNameAdded.add(zipEntry.getName());
                     } else {
                         TinkerLog.w(TAG, "skip copy %s from %s", name, ShareConstants.CLASS_N_APK_NAME);
                     }
                 }
             }
+            TinkerLog.i(TAG,"step 4 end copy class.dex ");
 
+            TinkerLog.i(TAG,"step 5 start copy resource ");
             //copy resource
             String resourceDir = patchVersionDirectory + "/" + ShareConstants.RES_PATH + "/";
             File resourceFile = new File(resourceDir, ShareConstants.RES_NAME);
@@ -234,15 +256,16 @@ public class ApkDiffPatchInternal extends BasePatchInternal {
 
                     if (!zipEntry.isDirectory() && !zipNameAdded.contains(name) && !name.equalsIgnoreCase(ShareConstants.RES_MANIFEST)) {
                         //TinkerLog.d(TAG, "copy %s from resource.apk.", name);
-                        ZipUtil.extractTinkerEntry(resourceZipFile, zipEntry, out);
+                        ZipUtil.extractTinkerEntry(resourceZipFile, zipEntry, alignedZipOutputStream);
                         zipNameAdded.add(name);
                     } else {
                         TinkerLog.d(TAG, "skip copy %s from resource.apk.", name);
                     }
                 }
             }
+            TinkerLog.i(TAG,"step 5 end copy resource ");
 
-            //copy other file from old apk
+            TinkerLog.i(TAG,"step 6 start copy other file from old apk ");
             oldApkZipFile = new ZipFile(oldApkFile);
             final Enumeration<? extends ZipEntry> entries = oldApkZipFile.entries();
             while (entries.hasMoreElements()) {
@@ -255,58 +278,60 @@ public class ApkDiffPatchInternal extends BasePatchInternal {
                     continue;
                 }
                 // "res/*", "assets/*", "resources.arsc"
-                // copy 除AndroidManifst、dex、lib、meta-inf外的所有方法
+                // copy 除AndroidManifst、dex、lib、meta-inf外的所有文件
                 if (!zipNameAdded.contains(name) && !name.equalsIgnoreCase(ShareConstants.RES_MANIFEST)
                         && !name.startsWith(ShareConstants.RES_APK_META_INF)) {
-                    ZipUtil.extractTinkerEntry(oldApkZipFile, zipEntry, out);
+                    ZipUtil.extractTinkerEntry(oldApkZipFile, zipEntry, alignedZipOutputStream);
                     zipNameAdded.add(name);
                     // TinkerLog.d(TAG, "copy %s from old apk.", name);
                 } else {
                     TinkerLog.d(TAG, "skip copy %s from old apk.", name);
                 }
             }
+            TinkerLog.i(TAG,"step 6 end copy other file from old apk ");
 
 
         } catch (Throwable e) {
-            manager.getPatchReporter().onDiffException(patchFile, newApkFile, newApkAlignFile, e);
+            manager.getPatchReporter().onTKDiffException(patchFile, newApkFile, newApkAlignFile, e);
             throw new TinkerRuntimeException("apk diff patch failed. " + e.getStackTrace());
         } finally {
-            StreamUtil.closeQuietly(out);
+            StreamUtil.closeQuietly(alignedZipOutputStream);
             StreamUtil.closeQuietly(inputStream);
             StreamUtil.closeQuietly(patchFile);
             StreamUtil.closeQuietly(oldApkZipFile);
             StreamUtil.closeQuietly(classNZipFile);
         }
 
-        ZipInput input = null;
-        ZipOutput zipOutput = null;
-
-        try {
-            TinkerLog.d(TAG, "start align zip");
-            long alignTime = System.currentTimeMillis();
-            input = ZipInput.read(newApkPath);
-            Map<String, ZioEntry> zioEntries = input.getEntries();
-            zipOutput = new ZipOutput(new FileOutputStream(newApkAlignFile));
-            for (ZioEntry inEntry : zioEntries.values()) {
-                zipOutput.write(inEntry);
-            }
-            TinkerLog.d(TAG, "align zip cost:%s", (System.currentTimeMillis() - alignTime));
-
-        } catch (Throwable e) {
-            manager.getPatchReporter().onDiffException(patchFile, newApkFile, newApkAlignFile, e);
-            throw new TinkerRuntimeException("apk diff patch failed. " + e.getMessage());
-        } finally {
-            if (zipOutput != null) {
-                try {
-                    zipOutput.close();
-                } catch (IOException e) {
-                    TinkerLog.w(TAG, "align zip cost:%s", e.getMessage());
-                }
-            }
-            if (input != null) {
-                input.close();
-            }
-        }
+        // start to zip align
+//        ZipInput input = null;
+//        ZipOutput zipOutput = null;
+//        try {
+//            TinkerLog.d(TAG, "start align zip");
+//            long alignTime = System.currentTimeMillis();
+//            input = ZipInput.read(newApkPath);
+//            Map<String, ZioEntry> zioEntries = input.getEntries();
+//            zipOutput = new ZipOutput(new FileOutputStream(newApkAlignFile));
+//            for (ZioEntry inEntry : zioEntries.values()) {
+//                zipOutput.write(inEntry);
+//            }
+//            TinkerLog.d(TAG, "align zip cost:%s", (System.currentTimeMillis() - alignTime));
+//
+//        } catch (Throwable e) {
+//            manager.getPatchReporter().onTKDiffException(patchFile, newApkFile, newApkAlignFile, e);
+//            throw new TinkerRuntimeException("apk diff patch failed. " + e.getMessage());
+//        } finally {
+//            if (zipOutput != null) {
+//                try {
+//                    zipOutput.close();
+//                } catch (IOException e) {
+//                    TinkerLog.w(TAG, "align zip cost:%s", e.getMessage());
+//                }
+//            }
+//            if (input != null) {
+//                input.close();
+//            }
+//        }
+        // end zip align
 
         if (newApkFile.exists()) {
             newApkFile.delete();
@@ -317,9 +342,9 @@ public class ApkDiffPatchInternal extends BasePatchInternal {
             String apkMd5 = SharePatchFileUtil.getMD5(newApkAlignFile);
             sharePatchInfo.apkVersion = apkMd5;
             SharePatchInfo.rewritePatchInfoFileWithLock(patchInfoFile, sharePatchInfo, patchInfoLockFile);
-            manager.getPatchReporter().onPatchDiffFail(patchFile, newApkFile, newApkAlignFile, ShareConstants.ERROR_DIFF_OK);
+            manager.getPatchReporter().onPatchTKDiffFail(patchFile, newApkFile, newApkAlignFile, ShareConstants.ERROR_DIFF_OK);
         } else {
-            manager.getPatchReporter().onPatchDiffFail(patchFile, newApkFile, newApkAlignFile, ShareConstants.ERROR_DIFF_GEN_APK_FAILED);
+            manager.getPatchReporter().onPatchTKDiffFail(patchFile, newApkFile, newApkAlignFile, ShareConstants.ERROR_DIFF_GEN_APK_FAILED);
         }
         TinkerLog.i(TAG, "apk diff patch cost:" + costTime);
         return true;

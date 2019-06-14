@@ -20,6 +20,7 @@ import com.tencent.tinker.bsdiff.BSDiff;
 import com.tencent.tinker.build.apkparser.AndroidParser;
 import com.tencent.tinker.build.info.InfoWriter;
 import com.tencent.tinker.build.patch.Configuration;
+import com.tencent.tinker.build.patch.PackingMode;
 import com.tencent.tinker.build.util.FileOperation;
 import com.tencent.tinker.build.util.Logger;
 import com.tencent.tinker.build.util.MD5;
@@ -209,7 +210,7 @@ public class ResDiffDecoder extends BaseDecoder {
             return false;
         }
         if (name.equals(TypedValue.RES_ARSC)) {
-            if (AndroidParser.resourceTableLogicalChange(config) && !config.mApkPatchMode) {
+            if (AndroidParser.resourceTableLogicalChange(config) && config.mCurrentPackingMode == PackingMode.HOTPATCH) {
                 Logger.d("found modify resource: " + name + ", but it is logically the same as original new resources.arsc, just ignore!");
                 return false;
             }
@@ -334,9 +335,8 @@ public class ResDiffDecoder extends BaseDecoder {
         modifiedSet.remove(TypedValue.RES_MANIFEST);
         largeModifiedSet.remove(TypedValue.RES_MANIFEST);
 
-        // Cpan
         //remove add, delete or modified if they are in ignore change pattern also
-        if (!config.mApkPatchMode) {
+        if (config.mCurrentPackingMode == PackingMode.HOTPATCH) {
             removeIgnoreChangeFile(modifiedSet);
             removeIgnoreChangeFile(deletedSet);
             removeIgnoreChangeFile(addedSet);

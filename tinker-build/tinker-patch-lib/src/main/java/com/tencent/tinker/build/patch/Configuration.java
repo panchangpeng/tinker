@@ -83,7 +83,10 @@ public class Configuration {
     protected static final String ATTR_SIGN_FILE_STOREPASS = "storepass";
     protected static final String ATTR_SIGN_FILE_ALIAS     = "alias";
 
-    protected static final String ATTR_SUPPORT_APK_PATCH   = "supportApkPatch";
+    protected static final String ATTR_SUPPORT_TINKER_DIFF = "supportTinkerDiff";
+    protected static final String ATTR_PACKING_MODE        = "packingMode";
+
+
     /**
      * base config data
      */
@@ -97,7 +100,9 @@ public class Configuration {
     public boolean mIsProtectedApp;
     public boolean mRemoveLoaderForAllDex;
     public boolean mSupportHotplugComponent;
-    public boolean mSupportApkPatch;
+    public boolean mSupportTinkerDiff;
+    public String  mPackingMode;
+    public String  mCurrentPackingMode;
     /**
      * lib config
      */
@@ -154,9 +159,6 @@ public class Configuration {
     public File mTempUnzipMergeDir;
 
     public boolean mUsingGradle;
-
-    public boolean mApkPatchMode = false; // 是否是apk patch的方式
-
 
     /**
      * use by command line with xml config
@@ -255,7 +257,8 @@ public class Configuration {
         mIsProtectedApp = param.isProtectedApp;
 
         mSupportHotplugComponent = param.supportHotplugComponent;
-        mSupportApkPatch         = param.supportApkPatch;
+        mSupportTinkerDiff       = param.supportTinkerDiff;
+        mPackingMode             = param.packingMode;
 
         mSevenZipPath = param.sevenZipPath;
         mZipAlignPath = param.zipAlignPath;
@@ -475,8 +478,10 @@ public class Configuration {
                         mIsProtectedApp = value.equals("true");
                     } else if (tagName.equals(ATTR_SUPPORT_HOTPLUG_COMPONENT)) {
                         mSupportHotplugComponent = value.equals("true");
-                    } else if (tagName.equals(ATTR_SUPPORT_APK_PATCH)) {
-                        mSupportApkPatch = value.equals("true");
+                    } else if (tagName.equals(ATTR_SUPPORT_TINKER_DIFF)) {
+                        mSupportTinkerDiff = value.equals("true");
+                    } else if (tagName.equals(ATTR_PACKING_MODE)) {
+                        mPackingMode = value;
                     } else if (tagName.equals(ATTR_USE_SIGN)) {
                         mUseSignAPk = value.equals("true");
                     } else if (tagName.equals(ATTR_SEVEN_ZIP_PATH)) {
@@ -656,6 +661,10 @@ public class Configuration {
         value = Utils.convertToPatternString(value);
         Pattern pattern = Pattern.compile(value);
         patterns.add(pattern);
+    }
+
+    private void setCurrentPackingMode(String mode) {
+        mCurrentPackingMode = mode;
     }
 
 }

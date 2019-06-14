@@ -160,11 +160,7 @@ public class TinkerPatchService extends IntentService {
             mode = checker.getPatchMetaPropertiesIfPresent().get(ShareConstants.PATCH_MODE);
         }
         TinkerLog.i(TAG, "tryLoadPatchFiles patch mode " + mode);
-        int patchMode = 0;
-        if (mode != null && mode.length() > 0) {
-            patchMode = Integer.valueOf(mode);
-        }
-        patchResult.patchMode = patchMode;
+        patchResult.packingMode = mode;
         patchResult.apkFilePath = newApkAlignPath;
 
         patchResult.isSuccess = result;

@@ -96,7 +96,7 @@ public class ShareConstants {
 
     public static final String RES_APK_META_FILES       = "assets/APK-META-INF";
     public static final String RES_APK_META_INF         = "META-INF";
-    public static final String RES_CLAZZ_META_FILES = "assets/secondary-program-dex-jars/metadata.txt";
+//    public static final String RES_CLAZZ_META_FILES = "assets/secondary-program-dex-jars/metadata.txt";
 
     public static final String DEXMODE_RAW = "raw";
     public static final String DEXMODE_JAR = "jar";
@@ -142,8 +142,8 @@ public class ShareConstants {
     public static final int TYPE_RESOURCE    = 6;
     public static final int TYPE_CLASS_N_DEX = 7;
 
-    public static final int PATCH_MODE_HOT       = 0; // Hot patch
-    public static final int PATCH_MODE_DIFF      = 1; // diff patch
+    public static final String PACKING_MODE_HOTPATCH    = "hotpatch"; // Hot patch
+    public static final String PACKING_MODE_TKDIFF      = "tkdiff"; // diff patch
 
     public static final int TINKER_DISABLE             = 0x00;
     public static final int TINKER_DEX_MASK            = 0x01;

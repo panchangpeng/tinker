@@ -179,37 +179,6 @@ public class MainActivity extends AppCompatActivity {
         builder.setView(v);
         final AlertDialog alert = builder.create();
         alert.show();
-        Log.i(TAG,"sfdsfsdfsdfsfs");
-
-        Log.i(TAG,"sfdsfsdfsdfsfs");
-        Log.i(TAG,"sfdsfsdfsdfsfs");
-        Log.i(TAG,"sfdsfsdfsdfsfs");
-
-        Log.i(TAG,"sfdsfsdfsdfsfs");
-        Log.i(TAG,"sfdsfsdfsdfsfs");
-        Log.i(TAG,"sfdsfsdfsdfsfs");
-        Log.i(TAG,"sfdsfsdfsdfsfs");
-        Log.i(TAG,"sfdsfsdfsdfsfs");
-        Log.i(TAG,"sfdsfsdfsdfsfs");
-        Log.i(TAG,"sfdsfsdfsdfsfs");
-        Log.i(TAG,"sfdsfsdfsdfsfs");
-        Log.i(TAG,"sfdsfsdfsdfsfs");
-
-        Log.i(TAG,"sfdsfsdfsdfsfs");
-        Log.i(TAG,"sfdsfsdfsdfsfs");
-        Log.i(TAG,"sfdsfsdfsdfsfs");
-        Log.i(TAG,"sfdsfsdfsdfsfs");
-        Log.i(TAG,"sfdsfsdfsdfsfs");
-        Log.i(TAG,"sfdsfsdfsdfsfs");
-
-        Log.i(TAG,"sfdsfsdfsdfsfs");
-        Log.i(TAG,"sfdsfsdfsdfsfs");
-        Log.i(TAG,"sfdsfsdfsdfsfs");
-        Log.i(TAG,"sfdsfsdfsdfsfs");
-        Log.i(TAG,"sfdsfsdfsdfsfs");
-        Log.i(TAG,"sfdsfsdfsdfsfs");
-
-
         return true;
     }
 

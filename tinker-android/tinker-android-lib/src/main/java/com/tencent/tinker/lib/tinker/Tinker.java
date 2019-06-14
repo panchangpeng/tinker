@@ -292,9 +292,9 @@ public class Tinker {
         // signatureCheck.verifyPatchMetaSignature(patchFile);
         // String mode = signatureCheck.getPatchMetaPropertiesIfPresent().get(ShareConstants.PATCH_MODE);
         // TinkerLog.i(TAG, "UpgradePatch Mode :%s", mode);
-        // int patchMode = 0;
+        // int packingMode = 0;
         // if (mode != null && mode.length() > 0) {
-        //    patchMode = Integer.valueOf(mode);
+        //    packingMode = Integer.valueOf(mode);
         // }
         // diff + tinkerId + '.apk'
         // patchVersionDirectory + "/" + ShareConstants.RES_PATH + "/";

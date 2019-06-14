@@ -38,6 +38,20 @@
         <!---->
         <!--Notice that currently this feature is incubating and only support NON-EXPORTED Activity-->
         <supportHotplugComponent value="false"/>
+
+        <!--Whether thinker should support tinker diff. It's increment update instead of hot patch.-->
+        <!--It will recreate the new apk in the client for install.-->
+        <supportTinkerDiff value="true" />
+
+        <!--packingMode has follow value-->
+        <!--1."default"   : It means we will try to use create hot pack first; If the new apk add some-->
+        <!--NON-EXPORTED Activity and the attribute of supportHotplugComponent is true,-->
+        <!--we will create hot pack also. Otherwise if the attribute of supportTinkerDiff-->
+        <!--is true, we will create increment update pack.-->
+        <!--2."hotpatch"    : Only create hot pack.-->
+        <!--3."tkdiff"      : Only create increment update pack-->
+        <!--4."tkdifftest"  : Only for test -->
+        <packingMode value="tkdifftest" />
     </issue>
 
     <issue id="dex">

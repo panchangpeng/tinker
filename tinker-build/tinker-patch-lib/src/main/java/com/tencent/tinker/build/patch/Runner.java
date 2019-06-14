@@ -16,7 +16,7 @@
 
 package com.tencent.tinker.build.patch;
 
-import com.tencent.tinker.build.apkpatcher.ApkPatchGenerator;
+import com.tencent.tinker.build.tinkerdiff.TinkerDiffGenerator;
 import com.tencent.tinker.build.builder.PatchBuilder;
 import com.tencent.tinker.build.decoder.ApkDecoder;
 import com.tencent.tinker.build.info.PatchInfo;
@@ -67,10 +67,11 @@ public class Runner {
             decoder.onAllPatchesEnd();
 
             //gen new apk and sign and copy apk mate info add by cpan
-            if (config.mApkPatchMode) {
-                ApkPatchGenerator apkPatchGenerator = new ApkPatchGenerator(config);
-                apkPatchGenerator.executeAndSave();
-            }
+            //if (config.mSupportTinkerDiff) {
+            //TinkerDiffGenerator apkPatchGenerator = new TinkerDiffGenerator(config);
+            //apkPatchGenerator.executeAndSave();
+            //}
+
             //gen meta file and version file
             PatchInfo info = new PatchInfo(config);
             info.gen();

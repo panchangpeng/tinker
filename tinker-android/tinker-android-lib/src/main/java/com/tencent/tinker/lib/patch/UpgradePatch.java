@@ -59,15 +59,12 @@ public class UpgradePatch extends AbstractPatch {
         //check the signature, we should create a new checker
         ShareSecurityCheck signatureCheck = new ShareSecurityCheck(context);
         signatureCheck.verifyPatchMetaSignature(patchFile);
-        String mode = "";
+        String packingMode = "";
         if (signatureCheck.getPatchMetaPropertiesIfPresent() != null) {
-            mode = signatureCheck.getPatchMetaPropertiesIfPresent().get(ShareConstants.PATCH_MODE);
+            packingMode = signatureCheck.getPatchMetaPropertiesIfPresent().get(ShareConstants.PATCH_MODE);
         }
-        TinkerLog.i(TAG, "UpgradePatch Mode :%s", mode);
-        int patchMode = 0;
-        if (mode != null && mode.length() > 0) {
-            patchMode = Integer.valueOf(mode);
-        }
+
+        TinkerLog.i(TAG, "UpgradePatch Mode :%s", packingMode);
         int returnCode = ShareTinkerInternals.checkTinkerPackage(context, manager.getTinkerFlags(), patchFile, signatureCheck);
         if (returnCode != ShareConstants.ERROR_PACKAGE_CHECK_OK) {
             TinkerLog.e(TAG, "UpgradePatch tryPatch:onPatchPackageCheckFail");
@@ -169,7 +166,7 @@ public class UpgradePatch extends AbstractPatch {
         }
 
         //we use destPatchFile instead of patchFile, because patchFile may be deleted during the patch process
-        if (!DexDiffPatchInternal.tryRecoverDexFiles(manager, signatureCheck, context, patchVersionDirectory, destPatchFile, patchMode)) {
+        if (!DexDiffPatchInternal.tryRecoverDexFiles(manager, signatureCheck, context, patchVersionDirectory, destPatchFile, packingMode)) {
             TinkerLog.e(TAG, "UpgradePatch tryPatch:new patch recover, try patch dex failed");
             return false;
         }
@@ -185,12 +182,12 @@ public class UpgradePatch extends AbstractPatch {
         }
 
         // check dex opt file at last, some phone such as VIVO/OPPO like to change dex2oat to interpreted
-        if (!DexDiffPatchInternal.waitAndCheckDexOptFile(patchFile, manager, patchMode)) {
+        if (!DexDiffPatchInternal.waitAndCheckDexOptFile(patchFile, manager, packingMode)) {
             TinkerLog.e(TAG, "UpgradePatch tryPatch:new patch recover, check dex opt file failed");
             return false;
         }
 
-        if (patchMode == ShareConstants.PATCH_MODE_HOT) {
+        if (ShareConstants.PACKING_MODE_HOTPATCH.equals(packingMode)) {
             if (!SharePatchInfo.rewritePatchInfoFileWithLock(patchInfoFile, newInfo, patchInfoLockFile)) {
                 TinkerLog.e(TAG, "UpgradePatch tryPatch:new patch recover, rewrite patch info failed");
                 manager.getPatchReporter().onPatchInfoCorrupted(patchFile, newInfo.oldVersion, newInfo.newVersion);
@@ -204,7 +201,7 @@ public class UpgradePatch extends AbstractPatch {
         }
 
         // gen new apk
-        if (!ApkDiffPatchInternal.tryRecoverApkFiles(manager, signatureCheck, context, diffDirectory, patchVersionDirectory, destPatchFile, patchMode, newInfo, patchInfoFile, patchInfoLockFile)) {
+        if (!TinkerDiffPatchInternal.tryRecoverApkFiles(manager, signatureCheck, context, diffDirectory, patchVersionDirectory, destPatchFile, packingMode, newInfo, patchInfoFile, patchInfoLockFile)) {
             TinkerLog.e(TAG, "UpgradePatch tryPatch:new patch recover, try recover apk failed");
             return false;
         }

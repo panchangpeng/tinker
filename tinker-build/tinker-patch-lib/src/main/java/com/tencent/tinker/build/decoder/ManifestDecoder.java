@@ -20,6 +20,7 @@ package com.tencent.tinker.build.decoder;
 import com.tencent.tinker.build.apkparser.AndroidParser;
 import com.tencent.tinker.build.info.InfoWriter;
 import com.tencent.tinker.build.patch.Configuration;
+import com.tencent.tinker.build.patch.PackingMode;
 import com.tencent.tinker.build.util.Logger;
 import com.tencent.tinker.build.util.TinkerPatchException;
 import com.tencent.tinker.build.util.TypedValue;
@@ -44,6 +45,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import javax.xml.bind.annotation.XmlType;
 
 /**
  * Created by zhangshaowen on 16/4/6.
@@ -85,6 +88,42 @@ public class ManifestDecoder extends BaseDecoder {
 
     @Override
     public boolean patch(File oldFile, File newFile) throws IOException, TinkerPatchException {
+
+        if (config.mPackingMode == PackingMode.DEFAULT || config.mPackingMode == PackingMode.HOTPATCH) {
+            config.mCurrentPackingMode = PackingMode.HOTPATCH;
+            metaWriter.writeLineToInfoFile("mode=" + PackingMode.HOTPATCH);
+            return hotpatch(oldFile,newFile);
+        }else if(config.mPackingMode == PackingMode.TKDIFF){
+            config.mCurrentPackingMode = PackingMode.HOTPATCH;
+            metaWriter.writeLineToInfoFile("mode=" + PackingMode.TKDIFF);
+            return tkpatch(oldFile,newFile);
+        }else {
+
+        }
+
+        if (isManifestChanged && hasIncComponent) {
+            // use apk patch mode when activitys
+            if (config.mPackingMode.equals(PackingMode.DEFAULT)) {
+                if (config.mSupportHotplugComponent) {
+                    Logger.d("\n now use hot pack mode for gen patch.");
+                    metaWriter.writeLineToInfoFile("mode=hotpatch");
+                    config.mCurrentPackingMode = PackingMode.HOTPATCH;
+                } else if (config.mSupportTinkerDiff) {
+                    Logger.d("\n now use tinker diff mode for gen patch.");
+                    metaWriter.writeLineToInfoFile("mode=tkdiff");
+                    config.mCurrentPackingMode = PackingMode.TKDIFF;
+                }
+            } else {
+                config.mCurrentPackingMode = config.mPackingMode;
+                metaWriter.writeLineToInfoFile("mode=" + config.mCurrentPackingMode);
+                Logger.d("\n now use %s mode for gen patch.", config.mCurrentPackingMode);
+            }
+        } else {
+            Logger.d("\n now use normal patch mode for gen patch.");
+        }
+    }
+
+    public boolean hotpatch(File oldFile, File newFile) throws IOException, TinkerPatchException {
         try {
             AndroidParser oldAndroidManifest = AndroidParser.getAndroidManifest(oldFile);
             AndroidParser newAndroidManifest = AndroidParser.getAndroidManifest(newFile);
@@ -109,10 +148,8 @@ public class ManifestDecoder extends BaseDecoder {
 
             if (!isManifestChanged) {
                 Logger.d("\nManifest has no changes, skip rest decode works.");
-                metaWriter.writeLineToInfoFile("mode=0");
                 return false;
             }
-
 
             // check whether there is any new Android Component and get their names.
             // so far only Activity increment can pass checking.
@@ -124,28 +161,14 @@ public class ManifestDecoder extends BaseDecoder {
             final boolean hasIncComponent = (!incActivities.isEmpty() || !incServices.isEmpty()
                     || !incProviders.isEmpty() || !incReceivers.isEmpty());
 
-            if (!config.mSupportApkPatch && !config.mSupportHotplugComponent && hasIncComponent) {
+            if (!config.mSupportHotplugComponent && hasIncComponent) {
                 announceWarningOrException("manifest was changed, while hot plug component support mode is disabled. "
-                        + "Such changes will not take effect, related components: \n"
-                        + " activity: " + incActivities + "\n"
-                        + " service: " + incServices + "\n"
-                        + " receiver: " + incReceivers + "\n"
-                        + " provider: " + incProviders + "\n"
-                );
-            }
-
-            if (isManifestChanged && hasIncComponent) {
-                // use apk patch mode when activitys
-                Logger.d("\n now use apk patch mode for gen patch.");
-                config.mApkPatchMode = true;
-                metaWriter.writeLineToInfoFile("mode=1");
-
-            } else {
-                Logger.d("\n now use normal patch mode for gen patch.");
+                        + "Such changes will not take effect.");
+                return false;
             }
 
             // generate increment manifest.
-            if (hasIncComponent && config.mSupportHotplugComponent) {
+            if (hasIncComponent) {
                 final Document newXmlDoc = DocumentHelper.parseText(newAndroidManifest.xml);
                 final Document incXmlDoc = DocumentHelper.createDocument();
 
@@ -209,10 +232,8 @@ public class ManifestDecoder extends BaseDecoder {
 
             if (isManifestChanged && !hasIncComponent) {
                 Logger.d("\nManifest was changed, while there's no any new components added."
-                       + " Make sure if such changes were all you expected.\n");
+                        + " Make sure if such changes were all you expected.\n");
             }
-
-
         } catch (ParseException e) {
             e.printStackTrace();
             throw new TinkerPatchException("Parse android manifest error!");
@@ -223,6 +244,10 @@ public class ManifestDecoder extends BaseDecoder {
             e.printStackTrace();
             throw new TinkerPatchException("Failed to generate increment manifest.", e);
         }
+        return false;
+    }
+
+    public boolean tkpatch(File oldFile, File newFile) throws IOException, TinkerPatchException {
         return false;
     }
 

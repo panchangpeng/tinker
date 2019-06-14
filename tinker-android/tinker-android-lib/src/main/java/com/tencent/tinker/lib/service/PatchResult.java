@@ -37,7 +37,7 @@ public class PatchResult implements Serializable {
 
     public String apkFilePath;
 
-    public int    patchMode;
+    public String packingMode;
 
     @Override
     public String toString() {
@@ -53,7 +53,7 @@ public class PatchResult implements Serializable {
         if (e != null) {
             sb.append("Throwable:" + e.getMessage() + "\n");
         }
-        if (patchMode == ShareConstants.PATCH_MODE_DIFF) {
+        if (ShareConstants.PACKING_MODE_TKDIFF.equals(packingMode)) {
             sb.append("apkFilePath:" + apkFilePath + "\n");
         }
         return sb.toString();

@@ -132,7 +132,7 @@ public interface PatchReporter {
      * @param apkFile       the output apk in sdcard
      * @param errorCode     the error code
      */
-    void onPatchDiffFail(File patchFile, File tempApkFile, File apkFile, int errorCode);
+    void onPatchTKDiffFail(File patchFile, File tempApkFile, File apkFile, int errorCode);
 
     /**
      * recover apk callback with unknown exception
@@ -141,6 +141,6 @@ public interface PatchReporter {
      * @param apkFile      the output apk in sdcard
      * @param e            the error code
      */
-    void onDiffException(File patchFile, File tempApkFile, File apkFile, Throwable e);
+    void onTKDiffException(File patchFile, File tempApkFile, File apkFile, Throwable e);
 
 }

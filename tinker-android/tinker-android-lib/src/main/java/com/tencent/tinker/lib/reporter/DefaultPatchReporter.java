@@ -226,8 +226,8 @@ public class DefaultPatchReporter implements PatchReporter {
      *                          {@code ShareConstants.ERROR_DIFF_GEN_APK_FAILED}                create apk file failed
      */
     @Override
-    public void onPatchDiffFail(File patchFile, File newApkFile, File newApkAlignFile, int errorCode) {
-        TinkerLog.i(TAG, "patchReporter onPatchDiffFail.  path: %s, code: %d",
+    public void onPatchTKDiffFail(File patchFile, File newApkFile, File newApkAlignFile, int errorCode) {
+        TinkerLog.i(TAG, "patchReporter onPatchTKDiffFail.  path: %s, code: %d",
                 patchFile.getAbsolutePath(), errorCode);
         if (errorCode != ShareConstants.ERROR_DIFF_OK) {
             //Tinker.with(context).cleanDiff();
@@ -243,8 +243,8 @@ public class DefaultPatchReporter implements PatchReporter {
      * @param e                 the exception of diff
      */
     @Override
-    public void onDiffException(File patchFile, File newApkFile, File newApkAlignFile, Throwable e) {
-        TinkerLog.i(TAG, "patchReporter onDiffException: patch exception path: %s, throwable: %s",
+    public void onTKDiffException(File patchFile, File newApkFile, File newApkAlignFile, Throwable e) {
+        TinkerLog.i(TAG, "patchReporter onTKDiffException: patch exception path: %s, throwable: %s",
                 patchFile.getAbsolutePath(), e.getMessage());
         TinkerLog.e(TAG, "tinker patch exception, welcome to submit issue to us: https://github.com/Tencent/tinker/issues");
         //Tinker.with(context).cleanDiff();

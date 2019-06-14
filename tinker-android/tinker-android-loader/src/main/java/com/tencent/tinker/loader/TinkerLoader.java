@@ -218,12 +218,8 @@ public class TinkerLoader extends AbstractTinkerLoader {
             mode = securityCheck.getPatchMetaPropertiesIfPresent().get(ShareConstants.PATCH_MODE);
         }
         Log.i(TAG, "tryLoadPatchFiles patch mode " + mode);
-        int patchMode = 0;
-        if (mode != null && mode.length() > 0) {
-            patchMode = Integer.valueOf(mode);
-        }
-        resultIntent.putExtra(ShareIntentUtil.INTENT_PATCH_MODE, patchMode);
-        final boolean isHotPatchMode = (patchMode == ShareConstants.PATCH_MODE_HOT);
+        resultIntent.putExtra(ShareIntentUtil.INTENT_PATCH_MODE, mode);
+        final boolean isHotPatchMode = (ShareConstants.PACKING_MODE_HOTPATCH.equals(mode));
 
         resultIntent.putExtra(ShareIntentUtil.INTENT_PATCH_TINKER_ID, securityCheck.getPackagePropertiesIfPresent().get(ShareConstants.TINKER_ID));
 

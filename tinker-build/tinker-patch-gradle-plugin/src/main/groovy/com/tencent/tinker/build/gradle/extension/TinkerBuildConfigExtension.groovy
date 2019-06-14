@@ -64,7 +64,9 @@ public class TinkerBuildConfigExtension {
      */
     boolean supportHotplugComponent
 
-    boolean supportApkPatch
+    boolean supportTinkerDiff
+
+    String     packingMode
 
     private Project project
 
@@ -85,7 +87,8 @@ public class TinkerBuildConfigExtension {
         keepDexApply = false
         isProtectedApp = false
         supportHotplugComponent = false
-        supportApkPatch = false
+        supportTinkerDiff = false
+        packingMode = "default"
     }
 
     void checkParameter() {
@@ -101,7 +104,8 @@ public class TinkerBuildConfigExtension {
            | applyResourceMapping = ${applyResourceMapping}
            | isProtectedApp = ${isProtectedApp}
            | supportHotplugComponent = ${supportHotplugComponent}
-           | supportApkPatch = ${supportApkPatch}
+           | supportTinkerDiff = ${supportTinkerDiff}
+           | packingMode    = ${packingMode}
            | keepDexApply = ${keepDexApply}
            | tinkerId = ${tinkerId}
         """.stripMargin()
