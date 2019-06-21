@@ -69,9 +69,14 @@ public class PatchInfoGen {
         config.mPackageFields.put(TypedValue.PKGMETA_KEY_IS_PROTECTED_APP, config.mIsProtectedApp ? "1" : "0");
     }
 
+    public void addPackingMode() {
+        config.mPackageFields.put(TypedValue.PACKING_MODE,config.mPackingMode);
+    }
+
     public void gen() throws Exception {
         addTinkerID();
         addProtectedAppFlag();
+        addPackingMode();
 
         Properties newProperties = new Properties();
         for (String key : config.mPackageFields.keySet()) {

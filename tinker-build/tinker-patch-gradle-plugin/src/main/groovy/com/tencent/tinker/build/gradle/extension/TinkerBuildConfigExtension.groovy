@@ -16,6 +16,7 @@
 
 package com.tencent.tinker.build.gradle.extension
 
+import com.tencent.tinker.build.patch.Configuration
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 
@@ -88,7 +89,7 @@ public class TinkerBuildConfigExtension {
         isProtectedApp = false
         supportHotplugComponent = false
         supportTinkerDiff = false
-        packingMode = "default"
+        packingMode = Configuration.PACKING_MODE_HOTPATCH
     }
 
     void checkParameter() {

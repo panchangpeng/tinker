@@ -2,7 +2,6 @@ package com.tencent.tinker.build.tinkerdiff;
 
 import com.tencent.tinker.build.info.InfoWriter;
 import com.tencent.tinker.build.patch.Configuration;
-import com.tencent.tinker.build.patch.PackingMode;
 import com.tencent.tinker.build.util.FileOperation;
 import com.tencent.tinker.build.util.Logger;
 import com.tencent.tinker.build.util.MD5;
@@ -82,7 +81,7 @@ public class TinkerDiffGenerator {
 
         if (metaWriter != null) {
             ArrayList<String> lines = new ArrayList<>();
-            lines.add("mode="+ PackingMode.TKDIFF);
+            lines.add("mode="+ Configuration.PACKING_MODE_TKDIFF);
             lines.add("md5=" + MD5.getMD5(configuration.mNewApkFile));
             metaWriter.writeLinesToInfoFile(lines);
 //            Logger.d("md5:%s", MD5.getMD5(signedApk));

@@ -20,7 +20,6 @@ import com.tencent.tinker.bsdiff.BSDiff;
 import com.tencent.tinker.build.apkparser.AndroidParser;
 import com.tencent.tinker.build.info.InfoWriter;
 import com.tencent.tinker.build.patch.Configuration;
-import com.tencent.tinker.build.patch.PackingMode;
 import com.tencent.tinker.build.util.FileOperation;
 import com.tencent.tinker.build.util.Logger;
 import com.tencent.tinker.build.util.MD5;
@@ -201,16 +200,16 @@ public class ResDiffDecoder extends BaseDecoder {
         if (oldMd5 != null && oldMd5.equals(newMd5)) {
             return false;
         }
-        if (Utils.checkFileInPattern(config.mResIgnoreChangePattern, name)) {
+        if (Utils.checkFileInPattern(config.mResIgnoreChangePattern, name) && config.isHotpatch()) {
             Logger.d("found modify resource: " + name + ", but it match ignore change pattern, just ignore!");
             return false;
         }
-        if (name.equals(TypedValue.RES_MANIFEST)) {
+        if (name.equals(TypedValue.RES_MANIFEST) && config.isHotpatch()) {
             Logger.d("found modify resource: " + name + ", but it is AndroidManifest.xml, just ignore!");
             return false;
         }
         if (name.equals(TypedValue.RES_ARSC)) {
-            if (AndroidParser.resourceTableLogicalChange(config) && config.mCurrentPackingMode == PackingMode.HOTPATCH) {
+            if (AndroidParser.resourceTableLogicalChange(config) && config.isHotpatch()) {
                 Logger.d("found modify resource: " + name + ", but it is logically the same as original new resources.arsc, just ignore!");
                 return false;
             }
@@ -336,7 +335,7 @@ public class ResDiffDecoder extends BaseDecoder {
         largeModifiedSet.remove(TypedValue.RES_MANIFEST);
 
         //remove add, delete or modified if they are in ignore change pattern also
-        if (config.mCurrentPackingMode == PackingMode.HOTPATCH) {
+        if (config.isHotpatch()) {
             removeIgnoreChangeFile(modifiedSet);
             removeIgnoreChangeFile(deletedSet);
             removeIgnoreChangeFile(addedSet);

@@ -17,6 +17,7 @@
 package com.tencent.tinker.build.apkparser;
 
 import com.tencent.tinker.build.patch.Configuration;
+import com.tencent.tinker.build.util.Utils;
 import com.tencent.tinker.commons.util.StreamUtil;
 
 import org.w3c.dom.Document;
@@ -58,7 +59,6 @@ import tinker.net.dongliu.apk.parser.struct.StringPool;
 import tinker.net.dongliu.apk.parser.struct.resource.ResourceTable;
 import tinker.net.dongliu.apk.parser.struct.xml.Attribute;
 import tinker.net.dongliu.apk.parser.utils.ParseUtils;
-import tinker.net.dongliu.apk.parser.utils.Utils;
 
 /**
  * Created by zhangshaowen on 16/5/5.
@@ -69,10 +69,10 @@ public class AndroidParser {
     public static final int TYPE_BROADCAST_RECEIVER = 3;
     public static final int TYPE_CONTENT_PROVIDER   = 4;
 
-    public final List<String> activities = new ArrayList<>();
-    public final List<String> receivers  = new ArrayList<>();
-    public final List<String> services   = new ArrayList<>();
-    public final List<String> providers  = new ArrayList<>();
+    public final List<Component> activities = new ArrayList<>();
+    public final List<Component> receivers  = new ArrayList<>();
+    public final List<Component> services   = new ArrayList<>();
+    public final List<Component> providers  = new ArrayList<>();
     public final ApkMeta apkMeta;
     public final String  xml;
 
@@ -185,7 +185,7 @@ public class AndroidParser {
         InputStream is = null;
         try {
             is = new BufferedInputStream(zf.getInputStream(entry));
-            final byte[] data = Utils.toByteArray(is);
+            final byte[] data = tinker.net.dongliu.apk.parser.utils.Utils.toByteArray(is);
             return ByteBuffer.wrap(data);
         } finally {
             if (is != null) {
@@ -227,8 +227,8 @@ public class AndroidParser {
     /**
      * @return a list of all components
      */
-    public List<String> getComponents() {
-        List<String> components = new ArrayList<>();
+    public List<Component> getComponents() {
+        List<Component> components = new ArrayList<>();
         components.addAll(activities);
         components.addAll(services);
         components.addAll(receivers);
@@ -288,8 +288,8 @@ public class AndroidParser {
         }
     }
 
-    private String getAndroidComponent(Node node, int type) {
+    private Component getAndroidComponent(Node node, int type) {
         NamedNodeMap attributes = node.getAttributes();
-        return getAttribute(attributes, "android:name");
+        return new Component(getAttribute(attributes, "android:name"), type, Utils.safeParseBoolean(getAttribute(attributes, "android:exported")));
     }
 }

@@ -18,9 +18,9 @@ package com.tencent.tinker.build.decoder;
 
 
 import com.tencent.tinker.build.apkparser.AndroidParser;
+import com.tencent.tinker.build.apkparser.Component;
 import com.tencent.tinker.build.info.InfoWriter;
 import com.tencent.tinker.build.patch.Configuration;
-import com.tencent.tinker.build.patch.PackingMode;
 import com.tencent.tinker.build.util.Logger;
 import com.tencent.tinker.build.util.TinkerPatchException;
 import com.tencent.tinker.build.util.TypedValue;
@@ -46,7 +46,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.xml.bind.annotation.XmlType;
 
 /**
  * Created by zhangshaowen on 16/4/6.
@@ -68,16 +67,9 @@ public class ManifestDecoder extends BaseDecoder {
     private static final String XML_NODENAME_INTENTFILTER       = "intent-filter";
 
     private final InfoWriter logWriter;
-    private final InfoWriter metaWriter;
 
     public ManifestDecoder(Configuration config, String metaPath, String logPath) throws IOException {
         super(config);
-
-        if (metaPath != null) {
-            metaWriter = new InfoWriter(config, config.mTempResultDir + File.separator + metaPath);
-        } else {
-            metaWriter = null;
-        }
 
         if (logPath != null) {
             logWriter = new InfoWriter(config, config.mOutFolder + File.separator + logPath);
@@ -88,57 +80,23 @@ public class ManifestDecoder extends BaseDecoder {
 
     @Override
     public boolean patch(File oldFile, File newFile) throws IOException, TinkerPatchException {
-
-        if (config.mPackingMode == PackingMode.DEFAULT || config.mPackingMode == PackingMode.HOTPATCH) {
-            config.mCurrentPackingMode = PackingMode.HOTPATCH;
-            metaWriter.writeLineToInfoFile("mode=" + PackingMode.HOTPATCH);
-            return hotpatch(oldFile,newFile);
-        }else if(config.mPackingMode == PackingMode.TKDIFF){
-            config.mCurrentPackingMode = PackingMode.HOTPATCH;
-            metaWriter.writeLineToInfoFile("mode=" + PackingMode.TKDIFF);
-            return tkpatch(oldFile,newFile);
-        }else {
-
-        }
-
-        if (isManifestChanged && hasIncComponent) {
-            // use apk patch mode when activitys
-            if (config.mPackingMode.equals(PackingMode.DEFAULT)) {
-                if (config.mSupportHotplugComponent) {
-                    Logger.d("\n now use hot pack mode for gen patch.");
-                    metaWriter.writeLineToInfoFile("mode=hotpatch");
-                    config.mCurrentPackingMode = PackingMode.HOTPATCH;
-                } else if (config.mSupportTinkerDiff) {
-                    Logger.d("\n now use tinker diff mode for gen patch.");
-                    metaWriter.writeLineToInfoFile("mode=tkdiff");
-                    config.mCurrentPackingMode = PackingMode.TKDIFF;
-                }
-            } else {
-                config.mCurrentPackingMode = config.mPackingMode;
-                metaWriter.writeLineToInfoFile("mode=" + config.mCurrentPackingMode);
-                Logger.d("\n now use %s mode for gen patch.", config.mCurrentPackingMode);
-            }
-        } else {
-            Logger.d("\n now use normal patch mode for gen patch.");
-        }
-    }
-
-    public boolean hotpatch(File oldFile, File newFile) throws IOException, TinkerPatchException {
         try {
             AndroidParser oldAndroidManifest = AndroidParser.getAndroidManifest(oldFile);
             AndroidParser newAndroidManifest = AndroidParser.getAndroidManifest(newFile);
 
             //check minSdkVersion
-            int minSdkVersion = Integer.parseInt(oldAndroidManifest.apkMeta.getMinSdkVersion());
+            int oldMinSdkVersion = Integer.parseInt(oldAndroidManifest.apkMeta.getMinSdkVersion());
 
-            if (minSdkVersion < TypedValue.ANDROID_40_API_LEVEL) {
+            final boolean oldMinSdkVersionSupportRawMode = oldMinSdkVersion >= TypedValue.ANDROID_40_API_LEVEL;
+            if (!oldMinSdkVersionSupportRawMode && config.isHotpatch()) {
                 if (config.mDexRaw) {
                     final StringBuilder sb = new StringBuilder();
                     sb.append("your old apk's minSdkVersion ")
-                      .append(minSdkVersion)
+                      .append(oldMinSdkVersion)
                       .append(" is below 14, you should set the dexMode to 'jar', ")
                       .append("otherwise, it will crash at some time");
                     announceWarningOrException(sb.toString());
+                    return false;
                 }
             }
 
@@ -153,22 +111,38 @@ public class ManifestDecoder extends BaseDecoder {
 
             // check whether there is any new Android Component and get their names.
             // so far only Activity increment can pass checking.
-            final Set<String> incActivities = getIncrementActivities(oldAndroidManifest.activities, newAndroidManifest.activities);
-            final Set<String> incServices = getIncrementServices(oldAndroidManifest.services, newAndroidManifest.services);
-            final Set<String> incReceivers = getIncrementReceivers(oldAndroidManifest.receivers, newAndroidManifest.receivers);
-            final Set<String> incProviders = getIncrementProviders(oldAndroidManifest.providers, newAndroidManifest.providers);
+            final Set<Component> incActivities = getIncrementActivities(oldAndroidManifest.activities, newAndroidManifest.activities);
+            final Set<Component> incServices = getIncrementServices(oldAndroidManifest.services, newAndroidManifest.services);
+            final Set<Component> incReceivers = getIncrementReceivers(oldAndroidManifest.receivers, newAndroidManifest.receivers);
+            final Set<Component> incProviders = getIncrementProviders(oldAndroidManifest.providers, newAndroidManifest.providers);
 
             final boolean hasIncComponent = (!incActivities.isEmpty() || !incServices.isEmpty()
                     || !incProviders.isEmpty() || !incReceivers.isEmpty());
+            final boolean hasIncExportedComponent = (hasExportedComponent(incActivities) || hasExportedComponent(incServices)
+                    || hasExportedComponent(incReceivers) || hasExportedComponent(incProviders));
 
-            if (!config.mSupportHotplugComponent && hasIncComponent) {
-                announceWarningOrException("manifest was changed, while hot plug component support mode is disabled. "
-                        + "Such changes will not take effect.");
+            if (config.isHotpatch()) {
+                if (hasIncExportedComponent) {
+                    announceWarningOrException("manifest was changed, while hot plug component can not support export component. "
+                            + "Such changes will not take effect.");
+                    return false;
+                } else if (!config.mSupportHotplugComponent) {
+                    announceWarningOrException("manifest was changed, while hot plug component support mode is disabled. "
+                            + "Such changes will not take effect.");
+                    return false;
+                } else {
+                    Logger.d("start write inc component for hot plug.");
+                }
+            } else if (config.isTKDIff()) {
+                Logger.d("ignore to write inc component for tk diff.");
+            } else {
+                announceWarningOrException(String.format("unsupported packing mode %s", config.mPackingMode));
                 return false;
             }
 
+            Logger.d(String.format("start write inc component meta. hasIncComponent:%b",hasIncComponent));
             // generate increment manifest.
-            if (hasIncComponent) {
+            if (hasIncComponent && config.isHotpatch()) {
                 final Document newXmlDoc = DocumentHelper.parseText(newAndroidManifest.xml);
                 final Document incXmlDoc = DocumentHelper.createDocument();
 
@@ -186,8 +160,10 @@ public class ManifestDecoder extends BaseDecoder {
                 if (!incActivities.isEmpty()) {
                     final List<Element> newActivityNodes = newAppNode.elements(XML_NODENAME_ACTIVITY);
                     final List<Element> incActivityNodes = getIncrementActivityNodes(packageName, newActivityNodes, incActivities);
+                    Logger.d(String.format("newActivityNodes size:%d  incActivities size:%d incActivityNodes size:%d", newActivityNodes.size(), incActivities.size(), incActivityNodes.size()));
                     for (Element node : incActivityNodes) {
                         incAppNode.add(node.detach());
+                        Logger.d(node.detach().asXML());
                     }
                 }
 
@@ -247,57 +223,53 @@ public class ManifestDecoder extends BaseDecoder {
         return false;
     }
 
-    public boolean tkpatch(File oldFile, File newFile) throws IOException, TinkerPatchException {
-        return false;
-    }
-
-    private Set<String> getIncrementActivities(Collection<String> oldActivities, Collection<String> newActivities) {
-        final Set<String> incNames = new HashSet<>(newActivities);
+    private Set<Component> getIncrementActivities(Collection<Component> oldActivities, Collection<Component> newActivities) {
+        final Set<Component> incNames = new HashSet<>(newActivities);
         incNames.removeAll(oldActivities);
         return incNames;
     }
 
-    private Set<String> getIncrementServices(Collection<String> oldServices, Collection<String> newServices) {
-        final Set<String> incNames = new HashSet<>(newServices);
+    private Set<Component> getIncrementServices(Collection<Component> oldServices, Collection<Component> newServices) {
+        final Set<Component> incNames = new HashSet<>(newServices);
         incNames.removeAll(oldServices);
         if (!incNames.isEmpty()) {
-//            announceWarningOrException("found added services: " + incNames.toString()
-//                    + "\n currently tinker does not support increase new services, "
-//                    + "such these changes would not take effect.");
+            announceWarningOrException("found added services: " + incNames.toString()
+                    + "\n currently tinker does not support increase new services, "
+                    + "such these changes would not take effect.");
         }
         return incNames;
     }
 
-    private Set<String> getIncrementReceivers(Collection<String> oldReceivers, Collection<String> newReceivers) {
-        final Set<String> incNames = new HashSet<>(newReceivers);
+    private Set<Component> getIncrementReceivers(Collection<Component> oldReceivers, Collection<Component> newReceivers) {
+        final Set<Component> incNames = new HashSet<>(newReceivers);
         incNames.removeAll(oldReceivers);
         if (!incNames.isEmpty()) {
-//            announceWarningOrException("found added receivers: " + incNames.toString()
-//                    + "\n currently tinker does not support increase new receivers, "
-//                    + "such these changes would not take effect.");
+            announceWarningOrException("found added receivers: " + incNames.toString()
+                    + "\n currently tinker does not support increase new receivers, "
+                    + "such these changes would not take effect.");
         }
         return incNames;
     }
 
-    private Set<String> getIncrementProviders(Collection<String> oldProviders, Collection<String> newProviders) {
-        final Set<String> incNames = new HashSet<>(newProviders);
+    private Set<Component> getIncrementProviders(Collection<Component> oldProviders, Collection<Component> newProviders) {
+        final Set<Component> incNames = new HashSet<>(newProviders);
         incNames.removeAll(oldProviders);
         if (!incNames.isEmpty()) {
-//            announceWarningOrException("found added providers: " + incNames.toString()
-//                    + "\n currently tinker does not support increase new providers, "
-//                    + "such these changes would not take effect.");
+            announceWarningOrException("found added providers: " + incNames.toString()
+                    + "\n currently tinker does not support increase new providers, "
+                    + "such these changes would not take effect.");
         }
         return incNames;
     }
 
-    private List<Element> getIncrementActivityNodes(String packageName, List<Element> newActivityNodes, Collection<String> incActivities) {
+    private List<Element> getIncrementActivityNodes(String packageName, List<Element> newActivityNodes, Collection<Component> incActivities) {
         final List<Element> result = new ArrayList<>();
         for (Element newActivityNode : newActivityNodes) {
             String activityClazzName = newActivityNode.attributeValue(XML_NODEATTR_NAME);
             if (activityClazzName.charAt(0) == '.') {
                 activityClazzName = packageName + activityClazzName;
             }
-            if (!incActivities.contains(activityClazzName)) {
+            if (!incActivities.contains(new Component(activityClazzName, com.tencent.tinker.build.apkparser.AndroidParser.TYPE_ACTIVITY, false))) {
                 continue;
             }
             final String exportedVal = newActivityNode.attributeValue(XML_NODEATTR_EXPORTED,
@@ -323,19 +295,30 @@ public class ManifestDecoder extends BaseDecoder {
         return result;
     }
 
-    private List<Element> getIncrementServiceNodes(String packageName, List<Element> newServiceNodes, Collection<String> incServices) {
+    private List<Element> getIncrementServiceNodes(String packageName, List<Element> newServiceNodes, Collection<Component> incServices) {
         announceWarningOrException("currently tinker does not support increase new services.");
         return Collections.emptyList();
     }
 
-    private List<Element> getIncrementReceiverNodes(String packageName, List<Element> newReceiverNodes, Collection<String> incReceivers) {
+    private List<Element> getIncrementReceiverNodes(String packageName, List<Element> newReceiverNodes, Collection<Component> incReceivers) {
         announceWarningOrException("currently tinker does not support increase new receivers.");
         return Collections.emptyList();
     }
 
-    private List<Element> getIncrementProviderNodes(String packageName, List<Element> newProviderNodes, Collection<String> incProviders) {
+    private List<Element> getIncrementProviderNodes(String packageName, List<Element> newProviderNodes, Collection<Component> incProviders) {
         announceWarningOrException("currently tinker does not support increase new providers.");
         return Collections.emptyList();
+    }
+
+    private boolean hasExportedComponent(Collection<Component> components) {
+        if (components != null && !components.isEmpty()) {
+            for (Component c : components) {
+                if (c.isExported()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void copyAttributes(Element srcNode, Element destNode) {
@@ -370,9 +353,6 @@ public class ManifestDecoder extends BaseDecoder {
     protected void clean() {
         if (logWriter != null) {
             logWriter.close();
-        }
-        if (metaWriter != null) {
-            metaWriter.close();
         }
     }
 }

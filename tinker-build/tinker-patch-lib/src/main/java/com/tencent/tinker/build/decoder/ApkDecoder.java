@@ -42,7 +42,7 @@ public class ApkDecoder extends BaseDecoder {
     private final File mNewApkDir;
 
     private final ManifestDecoder      manifestDecoder;
-    private final UniqueDexDiffDecoder dexPatchDecoder;
+    private final DexDiffDecoder       dexPatchDecoder;
     private final BsDiffDecoder        soPatchDecoder;
     private final ResDiffDecoder       resPatchDecoder;
 
@@ -61,7 +61,6 @@ public class ApkDecoder extends BaseDecoder {
         //put meta files in assets
         String prePath = TypedValue.FILE_ASSETS + File.separator;
         this.manifestDecoder = new ManifestDecoder(config, prePath + TypedValue.PATCH_META_FILE, TypedValue.PATCH_LOG_FILE);
-
         dexPatchDecoder = new UniqueDexDiffDecoder(config, prePath + TypedValue.DEX_META_FILE, TypedValue.DEX_LOG_FILE);
         soPatchDecoder = new BsDiffDecoder(config, prePath + TypedValue.SO_META_FILE, TypedValue.SO_LOG_FILE);
         resPatchDecoder = new ResDiffDecoder(config, prePath + TypedValue.RES_META_TXT, TypedValue.RES_LOG_FILE);

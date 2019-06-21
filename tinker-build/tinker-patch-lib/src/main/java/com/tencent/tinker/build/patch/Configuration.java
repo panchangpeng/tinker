@@ -86,6 +86,8 @@ public class Configuration {
     protected static final String ATTR_SUPPORT_TINKER_DIFF = "supportTinkerDiff";
     protected static final String ATTR_PACKING_MODE        = "packingMode";
 
+    public static final String PACKING_MODE_HOTPATCH     = "hotpatch";
+    public static final String PACKING_MODE_TKDIFF       = "tkdiff";
 
     /**
      * base config data
@@ -102,7 +104,7 @@ public class Configuration {
     public boolean mSupportHotplugComponent;
     public boolean mSupportTinkerDiff;
     public String  mPackingMode;
-    public String  mCurrentPackingMode;
+//    public String  mCurrentPackingMode;
     /**
      * lib config
      */
@@ -498,6 +500,8 @@ public class Configuration {
                         } else {
                             mZipAlignPath = "zipalign";
                         }
+                    } else if(tagName.equals(ATTR_PACKING_MODE)) {
+                        mPackingMode = value;
                     } else {
                         System.err.println("unknown property tag " + tagName);
                     }
@@ -663,8 +667,12 @@ public class Configuration {
         patterns.add(pattern);
     }
 
-    private void setCurrentPackingMode(String mode) {
-        mCurrentPackingMode = mode;
+    public boolean isHotpatch(){
+        return mPackingMode.equals(PACKING_MODE_HOTPATCH);
+    }
+
+    public boolean isTKDIff(){
+        return mPackingMode.equals(PACKING_MODE_TKDIFF);
     }
 
 }

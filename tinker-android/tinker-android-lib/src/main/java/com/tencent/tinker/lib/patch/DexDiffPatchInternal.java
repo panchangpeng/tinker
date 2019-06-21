@@ -21,6 +21,7 @@ import android.content.pm.ApplicationInfo;
 import android.os.Build;
 import android.os.SystemClock;
 
+import com.tencent.tinker.bsdiff.BSPatch;
 import com.tencent.tinker.commons.dexpatcher.DexPatchApplier;
 import com.tencent.tinker.commons.util.StreamUtil;
 import com.tencent.tinker.lib.tinker.Tinker;
@@ -554,9 +555,12 @@ public class DexDiffPatchInternal extends BasePatchInternal {
                         return false;
                     }
 
-                    patchDexFile(apk, patch, rawApkFileEntry, patchFileEntry, info, extractedFile);
-
-                    if (!SharePatchFileUtil.verifyDexFileMd5(extractedFile, extractedFileMd5)  && packingMode != ShareConstants.PACKING_MODE_TKDIFF) {
+                    if(ShareConstants.PACKING_MODE_HOTPATCH.equals(packingMode)) {
+                        patchDexFile(apk, patch, rawApkFileEntry, patchFileEntry, info, extractedFile);
+                    }else{
+                        patchBSDexFile(apk,patch,rawApkFileEntry,patchFileEntry,info,extractedFile);
+                    }
+                    if (!SharePatchFileUtil.verifyDexFileMd5(extractedFile, extractedFileMd5)) {
                         TinkerLog.w(TAG, "Failed to recover dex file when verify patched dex: " + extractedFile.getPath());
                         manager.getPatchReporter().onPatchTypeExtractFail(patchFile, extractedFile, info.rawName, type);
                         SharePatchFileUtil.safeDeleteFile(extractedFile);
@@ -710,6 +714,22 @@ public class DexDiffPatchInternal extends BasePatchInternal {
             StreamUtil.closeQuietly(oldDexStream);
             StreamUtil.closeQuietly(patchFileStream);
         }
+    }
+
+    private static void patchBSDexFile(
+        ZipFile baseApk, ZipFile patchPkg, ZipEntry oldDexEntry, ZipEntry patchFileEntry,
+                ShareDexDiffPatchInfo patchInfo, File patchedDexFile) throws IOException {
+        InputStream oldDexStream = null;
+        InputStream patchFileStream = null;
+        try {
+            oldDexStream = new BufferedInputStream(baseApk.getInputStream(oldDexEntry));
+            patchFileStream = (patchFileEntry != null ? new BufferedInputStream(patchPkg.getInputStream(patchFileEntry)) : null);
+            BSPatch.patchFast(oldDexStream,patchFileStream,patchedDexFile);
+        } finally {
+            StreamUtil.closeQuietly(oldDexStream);
+            StreamUtil.closeQuietly(patchFileStream);
+        }
+
     }
 
 }

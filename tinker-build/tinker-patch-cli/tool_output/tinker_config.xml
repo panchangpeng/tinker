@@ -50,8 +50,7 @@
         <!--is true, we will create increment update pack.-->
         <!--2."hotpatch"    : Only create hot pack.-->
         <!--3."tkdiff"      : Only create increment update pack-->
-        <!--4."tkdifftest"  : Only for test -->
-        <packingMode value="tkdifftest" />
+        <packingMode value="hotpatch" />
     </issue>
 
     <issue id="dex">

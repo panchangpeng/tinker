@@ -43,6 +43,7 @@ public class TypedValue {
 
     public static final String TINKER_ID     = "TINKER_ID";
     public static final String NEW_TINKER_ID = "NEW_TINKER_ID";
+    public static final String PACKING_MODE  = "packingMode";
 
     // Please keep it synchronized with the one defined in ShareConstants.
     public static final String PKGMETA_KEY_IS_PROTECTED_APP = "is_protected_app";

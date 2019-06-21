@@ -237,4 +237,11 @@ public class Utils {
             e.printStackTrace();
         }
     }
+
+    public static boolean safeParseBoolean(String b) {
+        if (b != null && b.length() > 0) {
+            return b.equalsIgnoreCase("true");
+        }
+        return false;
+    }
 }

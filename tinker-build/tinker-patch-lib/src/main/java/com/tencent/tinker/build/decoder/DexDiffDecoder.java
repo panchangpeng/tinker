@@ -21,11 +21,11 @@ import com.tencent.tinker.android.dex.ClassDef;
 import com.tencent.tinker.android.dex.Dex;
 import com.tencent.tinker.android.dex.DexFormat;
 import com.tencent.tinker.bsdiff.BSDiff;
+import com.tencent.tinker.bsdiff.BSPatch;
 import com.tencent.tinker.build.dexpatcher.DexPatchGenerator;
 import com.tencent.tinker.build.dexpatcher.util.ChangedClassesDexClassInfoCollector;
 import com.tencent.tinker.build.info.InfoWriter;
 import com.tencent.tinker.build.patch.Configuration;
-import com.tencent.tinker.build.patch.PackingMode;
 import com.tencent.tinker.build.util.DexClassesComparator;
 import com.tencent.tinker.build.util.DexClassesComparator.DexClassInfo;
 import com.tencent.tinker.build.util.DexClassesComparator.DexGroup;
@@ -134,7 +134,7 @@ public class DexDiffDecoder extends BaseDecoder {
         // first of all, we should check input files if excluded classes were modified.
         Logger.d("Check for loader classes in dex: %s", dexName);
 
-        if (config.mCurrentPackingMode == PackingMode.HOTPATCH) {
+        if (config.isHotpatch()) {
             try {
                 excludedClassModifiedChecker.checkIfExcludedClassWasModifiedInNewDex(oldFile, newFile);
             } catch (IOException e) {
@@ -172,7 +172,7 @@ public class DexDiffDecoder extends BaseDecoder {
 
         if ((oldMd5 != null && !oldMd5.equals(newMd5)) || (oldMd5 == null && newMd5 != null)) {
             hasDexChanged = true;
-            if (oldMd5 != null) {
+            if (oldMd5 != null || config.isHotpatch()) {
                 collectAddedOrDeletedClasses(oldFile, newFile);
             }
         }
@@ -196,13 +196,14 @@ public class DexDiffDecoder extends BaseDecoder {
             return;
         }
 
+
         if (config.mIsProtectedApp) {
             generateChangedClassesDexFile();
         } else {
             generatePatchInfoFile();
         }
 
-        if (config.mCurrentPackingMode == PackingMode.HOTPATCH) {
+        if (config.isHotpatch()) {
             addTestDex();
         }
     }
@@ -361,8 +362,7 @@ public class DexDiffDecoder extends BaseDecoder {
         //generateSmallPatchedDexInfoFile();
 
         logDexesToDexMeta();
-
-        checkCrossDexMovingClasses();
+        if (config.isHotpatch()) checkCrossDexMovingClasses();
     }
 
     @SuppressWarnings("NewApi")
@@ -450,15 +450,21 @@ public class DexDiffDecoder extends BaseDecoder {
         ensureDirectoryExist(dexDiffOut.getParentFile());
 
         try {
-//            if (config.mCurrentPackingMode == PackingMode.TKDIFF) {
-//                BSDiff.bsdiff(oldDexFile, newDexFile, dexDiffOut);
-//            } else {
-                DexPatchGenerator dexPatchGen = new DexPatchGenerator(oldDexFile, newDexFile);
+            if (!config.isHotpatch()) {
 
+                BSDiff.bsdiff(oldDexFile, newDexFile, dexDiffOut);
+                logWriter.writeLineToInfoFile(
+                        String.format(
+                                "Start diff between [%s] as old and [%s] as new:",
+                                getRelativeStringBy(oldDexFile, config.mTempUnzipOldDir),
+                                getRelativeStringBy(newDexFile, config.mTempUnzipNewDir)
+                        )
+                );
+
+            } else {
+                DexPatchGenerator dexPatchGen = new DexPatchGenerator(oldDexFile, newDexFile);
                 // TODO cpan do remove sysload when gen a patch for apk.
-                if (config.mCurrentPackingMode == PackingMode.HOTPATCH) {
-                     dexPatchGen.setAdditionalRemovingClassPatterns(config.mDexLoaderPattern);
-                }
+                dexPatchGen.setAdditionalRemovingClassPatterns(config.mDexLoaderPattern);
 
                 logWriter.writeLineToInfoFile(
                         String.format(
@@ -469,7 +475,7 @@ public class DexDiffDecoder extends BaseDecoder {
                 );
 
                 dexPatchGen.executeAndSaveTo(dexDiffOut);
-//            }
+            }
         } catch (Exception e) {
             throw new TinkerPatchException(e);
         }
@@ -488,7 +494,11 @@ public class DexDiffDecoder extends BaseDecoder {
         }
 
         try {
-            new DexPatchApplier(oldDexFile, dexDiffOut).executeAndSaveTo(tempFullPatchedDexFile);
+            if (config.isHotpatch()) {
+                new DexPatchApplier(oldDexFile, dexDiffOut).executeAndSaveTo(tempFullPatchedDexFile);
+            } else {
+                BSPatch.patchFast(oldDexFile, tempFullPatchedDexFile, dexDiffOut, 0);
+            }
 
             Logger.d(
                     String.format("Verifying if patched new dex is logically the same as original new dex: %s ...", getRelativeStringBy(newDexFile, config.mTempUnzipNewDir))
