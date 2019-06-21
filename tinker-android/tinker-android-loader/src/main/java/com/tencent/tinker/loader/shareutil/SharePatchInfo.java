@@ -31,7 +31,7 @@ import java.util.Properties;
  * Created by zhangshaowen on 16/3/16.
  */
 public class SharePatchInfo {
-    private static final String TAG = "Tinker.PatchInfo";
+    private static final String TAG = "Tinker.SharePatchInfo";
 
     public static final int    MAX_EXTRACT_ATTEMPTS  = ShareConstants.MAX_EXTRACT_ATTEMPTS;
     public static final String OLD_VERSION           = ShareConstants.OLD_VERSION;
